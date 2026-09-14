@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI輔助資料搜尋及整理（下）｜活動材料</title>
+<style>
+:root{
+  --cream:#F2EEE5;--cream-soft:#EAE4D5;--cream-line:#DCD4BF;
+  --ink:#1B1F24;--ink-muted:#5A5E66;--ink-faint:#6D7079;
+  --slate:#3F5B7E;--slate-dark:#2A3B53;--slate-tint:#DDE3EB;
+  --accent:#A4452F;--accent-soft:#EFD5CC;
+  --ok:#2F6B4A;--ok-soft:#E0EDE5;--warn:#B5781E;--bad:#A33524;
+  --body-font:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--cream);font-family:var(--body-font);color:var(--ink);min-height:100vh}
+.topbar{position:sticky;top:0;z-index:30;background:#FAF7EF;border-bottom:1px solid var(--cream-line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.brand{font-weight:800;font-size:15px;letter-spacing:.04em}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab-btn{font-family:var(--body-font);font-size:14px;padding:7px 14px;border:1px solid var(--cream-line);background:#FAF7EF;border-radius:999px;cursor:pointer;color:var(--ink-muted)}
+.tab-btn.active{background:var(--slate);border-color:var(--slate);color:#fff;font-weight:700}
+main{max-width:1100px;margin:0 auto;padding:22px 18px 80px}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.material{background:#FAF7EF;border:1px solid var(--cream-line);border-radius:14px;padding:20px 22px;margin-bottom:26px}
+.material>h2{font-size:20px;margin-bottom:4px}
+.material .how{font-size:13px;color:var(--ink-faint);margin-bottom:14px}
+.pill{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.05em;padding:3px 12px;border-radius:999px;margin-right:6px}
+.pill.slate{background:var(--slate-tint);color:var(--slate-dark)}
+.btn{font-family:var(--body-font);font-size:14px;padding:8px 16px;border:1px solid var(--cream-line);background:#fff;border-radius:10px;cursor:pointer}
+.btn:hover{background:var(--cream-soft)}
+.btn.primary{background:var(--slate);border-color:var(--slate);color:#fff}
+.btn.primary:hover{background:var(--slate-dark)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+textarea,input[type=text],select{font-family:var(--body-font);font-size:15px;border:1px solid var(--cream-line);border-radius:8px;padding:8px 10px;width:100%}
+.field{margin-bottom:12px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:4px;color:var(--ink-muted)}
+.result-banner{margin-top:14px;padding:12px 16px;border-radius:10px;font-weight:700;display:none}
+.result-banner.show{display:block}
+.result-banner.good{background:var(--ok-soft);color:var(--ok)}
+.result-banner.mid{background:#F3E6CC;color:var(--warn)}
+.note{font-size:13px;color:var(--ink-faint);line-height:1.7;margin-top:10px}
+.warn-strip{background:#F6E3DF;border-left:4px solid var(--bad);border-radius:0 10px 10px 0;padding:10px 14px;color:var(--bad);font-size:13px;line-height:1.7;margin:12px 0}
+.tip-strip{background:var(--slate-tint);border-left:4px solid var(--slate);border-radius:0 10px 10px 0;padding:10px 14px;color:var(--slate-dark);font-size:13px;line-height:1.7;margin:12px 0}
+table.sheet{width:100%;border-collapse:collapse;margin:10px 0;min-width:720px}
+table.sheet th,table.sheet td{border:1px solid var(--cream-line);padding:8px;font-size:14px;vertical-align:top;background:#fff}
+table.sheet th{background:var(--slate-tint);color:var(--slate-dark);font-size:13px}
+.sheet-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.sheet input,table.sheet textarea,table.sheet select{font-family:var(--body-font);font-size:13px;border:1px solid var(--cream-line);border-radius:6px;padding:6px 8px;width:100%;background:#fff}
+table.sheet textarea{min-height:52px;resize:vertical}
+a.btn{display:inline-block;text-decoration:none;color:var(--ink);text-align:center}
+a.btn.primary{color:#fff}
+.link-btns{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:10px}
+h3.sub{font-size:16px;margin:18px 0 8px}
+.library{margin:18px 0;border:1px solid var(--cream-line);border-radius:12px;background:#fff;overflow:hidden}
+.library>summary{cursor:pointer;list-style:none;padding:14px 16px;font-size:15px;font-weight:800;color:var(--slate-dark);background:var(--slate-tint);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.library>summary::-webkit-details-marker{display:none}
+.library>summary::after{content:"展開";font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--slate)}
+.library[open]>summary::after{content:"收起"}
+.library-body{padding:16px}
+.library-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+.prompt-card,.focus-example,.desk-prompt{border:1px solid var(--cream-line);border-radius:10px;background:#FAF7EF;padding:14px;line-height:1.65}
+.prompt-card h4,.focus-example h4,.desk-prompt h4{font-size:15px;margin-bottom:7px;color:var(--slate-dark)}
+.prompt-card p,.focus-example p,.desk-prompt p,.prompt-card li,.desk-prompt li{font-size:13px;line-height:1.65;color:var(--ink-muted)}
+.prompt-card .copy,.desk-prompt .copy{margin:9px 0;padding:10px 12px;border-left:3px solid var(--accent);background:#fff;color:var(--ink);font-size:13px;white-space:pre-wrap}
+.focus-example .bad{color:var(--bad)}
+.focus-example .good{color:var(--ok)}
+.library-intro{border-left:4px solid var(--accent);background:var(--accent-soft);padding:12px 14px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.7}
+.mini-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.mini-steps div{border:1px solid var(--cream-line);border-radius:9px;padding:10px;background:#FAF7EF;font-size:13px;line-height:1.6}
+@media(max-width:720px){.mini-steps{grid-template-columns:1fr}}
+@media print{
+  .topbar,.toolbar,.btn{display:none!important}
+  body{background:#fff}.material{border:1px solid #999;break-inside:avoid}
+  .tab-panel{display:block!important}
+  details.library:not([open])>*:not(summary){display:block!important}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">AI輔助資料搜尋及整理（下）｜活動材料</div>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="prompt" type="button">提示詞</button>
+    <button class="tab-btn" data-tab="vpn" type="button">VPN</button>
+    <button class="tab-btn" data-tab="feed" type="button">餵／不餵</button>
+    <button class="tab-btn" data-tab="extract" type="button">提取表</button>
+    <button class="tab-btn" data-tab="synth" type="button">歸納</button>
+    <button class="tab-btn" data-tab="compare" type="button">對照／FAQ／缺口</button>
+    <button class="tab-btn" data-tab="present" type="button">呈現</button>
+    <button class="tab-btn" data-tab="oral" type="button">閉環口頭</button>
+    <button class="tab-btn" data-tab="links" type="button">官方入口</button>
+  </nav>
+</header>
+<main>
+
+<section class="tab-panel active" id="panel-prompt">
+<section class="material" id="prompt">
+  <h2>提示詞：元素與優化</h2>
+  <p class="how">第一段。先抄模糊句，再改成四格＋ICIO。達標：優質版看得到角色、不要做、格式。</p>
+  <div class="tip-strip">禁止只打「幫我整理」。你的問題＝模型的前文。</div>
+  <div class="field"><label>模糊版（先抄）</label><textarea id="prompt-fuzzy" rows="2">幫我整理這些運動資料。</textarea></div>
+  <h3 class="sub">常見元素（前四項必填）</h3>
+  <div class="field"><label>1 角色</label><input type="text" id="prompt-role" placeholder="例如：公共衛生護士"></div>
+  <div class="field"><label>2 任務（要做）</label><textarea id="prompt-task" rows="2" placeholder="例如：用表格比較每週分鐘數／強度／注意事項"></textarea></div>
+  <div class="field"><label>3 不要做</label><textarea id="prompt-dont" rows="2" placeholder="補洞、當處方、賣課口吻"></textarea></div>
+  <div class="field"><label>4 格式</label><textarea id="prompt-format" rows="2" placeholder="四欄表；空格寫來源未載；繁體中文"></textarea></div>
+  <div class="field"><label>5 範例一列（加分）</label><textarea id="prompt-shot" rows="2" placeholder="主張／原文／出處長什麼樣"></textarea></div>
+  <h3 class="sub">ICIO（本堂主力）</h3>
+  <div class="field"><label>I 任務</label><input type="text" id="prompt-i1" placeholder="做對照表，不要摘要"></div>
+  <div class="field"><label>C 背景</label><input type="text" id="prompt-c" placeholder="45 歲開始運動；有官方也有開箱"></div>
+  <div class="field"><label>I 輸入</label><input type="text" id="prompt-i2" placeholder="只根據勾選的這幾檔"></div>
+  <div class="field"><label>O 輸出</label><input type="text" id="prompt-o" placeholder="四欄表；來源未載；繁中"></div>
+  <div class="field"><label>拼出來的優質提示詞（可再手改）</label><textarea id="prompt-good" rows="5"></textarea></div>
+  <div class="toolbar"><button class="btn primary" id="prompt-build" type="button">依四格＋ICIO 拼一版</button><button class="btn danger op" id="prompt-reset" type="button">清空</button></div>
+  <div class="result-banner" id="prompt-hint"></div>
+  <p class="note">十個框架只當菜單。本堂深挖 ICIO。CO-STAR 留給對外文案。</p>
+</section>
+</section>
+
+<section class="tab-panel" id="panel-vpn">
+<section class="material" id="vpn">
+  <h2>Proton VPN（Chrome 外掛）</h2>
+  <p class="how">官方入口：protonvpn.com/download-chrome-extension。發行者必須是 Proton AG。外掛只保護這個瀏覽器。</p>
+  <div class="warn-strip">不願放進雲端硬碟的東西，不要放進筆記本。不教繞過學校／公司政策。</div>
+  <h3 class="sub">四格（用自己的話）</h3>
+  <div class="field"><label>外掛沒開時，場地 Wi‑Fi 對這個 Chrome 看得到什麼？</label><textarea id="vpn-off-wifi" rows="2"></textarea></div>
+  <div class="field"><label>外掛已連線時，場地 Wi‑Fi 對這個 Chrome 看得到什麼？</label><textarea id="vpn-on-wifi" rows="2"></textarea></div>
+  <div class="field"><label>外掛已連線後，Google 還看不看得到上傳的檔？</label><textarea id="vpn-google" rows="2" placeholder="一樣看得到"></textarea></div>
+  <div class="field"><label>必須出現的一句</label><input type="text" id="vpn-only" placeholder="只保護這個瀏覽器"></div>
+  <h3 class="sub">跟做或備案</h3>
+  <div class="field"><label>狀態</label>
+    <select id="vpn-status">
+      <option value="">（選）</option>
+      <option value="connected">已連線</option>
+      <option value="backup">走備案</option>
+    </select>
+  </div>
+  <div class="field"><label>已連線：哪個國家／我釘選了？</label><input type="text" id="vpn-where"></div>
+  <div class="field"><label>備案 1：Add to Chrome 在哪？發行者應看到哪幾個字？</label><textarea id="vpn-q1" rows="2"></textarea></div>
+  <div class="field"><label>備案 2：為什麼要釘選？</label><textarea id="vpn-q2" rows="2"></textarea></div>
+  <div class="field"><label>備案 3：換另一個瀏覽器還受保護嗎？</label><textarea id="vpn-q3" rows="2" placeholder="不受保護"></textarea></div>
+  <div class="field"><label>備案 4：願不願把今天這堆放進 Google？</label><textarea id="vpn-q4" rows="2"></textarea></div>
+  <div class="toolbar"><button class="btn danger op" id="vpn-reset" type="button">清空</button></div>
+  <div class="result-banner" id="vpn-hint"></div>
+</section>
+</section>
+
+<section class="tab-panel" id="panel-feed">
+<section class="material" id="feed">
+  <h2>可讀堆：餵／不餵</h2>
+  <p class="how">優先讀上堂 <code>ais.pile</code>。讀不到就抄紙本／照片。精讀必餵；略讀可選（領包第 6 檔必餵）；淘汰不餵（領包第 5 檔開箱文當坑）。</p>
+  <div class="tip-strip" id="feed-src">尚未讀到上堂可讀堆。請抄紙本，或確認兩個活動頁是同一個瀏覽器、不是 file:// 互讀失敗。</div>
+  <div class="sheet-wrap">
+    <table class="sheet">
+      <thead><tr><th>內容一句話</th><th>來源是誰</th><th>精讀／略讀／淘汰</th><th>餵／不餵／例外</th><th>一句理由</th></tr></thead>
+      <tbody id="feed-body"></tbody>
+    </table>
+  </div>
+  <div class="toolbar"><button class="btn primary" id="feed-import" type="button">再讀一次 ais.pile</button><button class="btn danger op" id="feed-reset" type="button">清空</button></div>
+  <div class="result-banner" id="feed-hint"></div>
+  <p class="note">閉環「洗」也用這表：淘汰列必須丟掉。</p>
+</section>
+</section>
+
+<section class="tab-panel" id="panel-extract">
+<section class="material" id="extract">
+  <h2>提取表</h2>
+  <p class="how"><strong>換成上班的樣子：</strong>同一張四欄表，把三列換成三家供應商——主張＝報價與交期、原文依據＝報價單那一行、出處＝檔名與日期、我信／存疑＝有沒有寫清楚含不含稅。</p>
+  <p class="how">今天主產品之一。出處＝檔名，對回可讀堆表的「來源是誰」。體驗型，無答案鎖。</p>
+  <div class="tip-strip">達標：至少 4 列；至少 2 個不同出處；至少 1 列存疑。第 6 檔略讀必餵；若被寫成運動處方，該列標存疑。</div>
+  <div class="sheet-wrap">
+    <table class="sheet">
+      <thead><tr><th>主張</th><th>原文依據</th><th>出處</th><th>我信／存疑</th></tr></thead>
+      <tbody id="extract-body"></tbody>
+    </table>
+  </div>
+  <div class="result-banner" id="extract-hint"></div>
+  <div class="toolbar"><button class="btn danger op" id="extract-reset" type="button">清空</button></div>
+</section>
+</section>
+
+<section class="tab-panel" id="panel-synth">
+<section class="material" id="synth">
+  <h2>跨來源歸納</h2>
+  <p class="how">三段都要有字。第三段必須是你自己的話。</p>
+  <div class="field"><label>同意</label><textarea id="synth-agree" rows="4"></textarea></div>
+  <div class="field"><label>打架或層級</label><textarea id="synth-fight" rows="4"></textarea></div>
+  <div class="field"><label>下一步</label><textarea id="synth-next" rows="4"></textarea></div>
+  <div class="result-banner" id="synth-hint"></div>
+  <div class="toolbar"><button class="btn danger op" id="synth-reset" type="button">清空</button></div>
+</section>
+</section>
+
+<section class="tab-panel" id="panel-compare">
+<section class="material" id="compare">
+  <h2>對照／FAQ／缺口（工作紙 2）</h2>
+  <p class="how"><strong>換成上班的樣子：</strong>三個方案比一比，表頭就是你要決定的那三件事——成本／工期／風險，不是「哪個最好」。</p>
+  <p class="how">60 分鐘。成功標準：至少一格「來源未載」；FAQ 題題有引用；缺口下一步是文獻類型。</p>
+  <h3 class="sub">0–15 專家十問（寫 5 個）</h3>
+  <div class="sheet-wrap">
+    <table class="sheet" style="min-width:560px">
+      <thead><tr><th>#</th><th>專家該能回答的問題</th><th>主要對應哪筆來源</th></tr></thead>
+      <tbody id="cmp-q-body"></tbody>
+    </table>
+  </div>
+  <div class="field"><label>來源已引發但還沒回答的 2 題</label><textarea id="cmp-open" rows="3"></textarea></div>
+  <h3 class="sub">15–35 對照表</h3>
+  <div class="field"><label>我定的欄位</label><input type="text" id="cmp-cols" placeholder="每週分鐘數／強度／注意事項／引用"></div>
+  <div class="sheet-wrap">
+    <table class="sheet">
+      <thead><tr><th>列名／來源</th><th>欄 1</th><th>欄 2</th><th>欄 3</th><th>引用</th></tr></thead>
+      <tbody id="cmp-table-body"></tbody>
+    </table>
+  </div>
+  <div class="field"><label>「來源未載」出現在第幾格？沒有就重做欄位。</label><input type="text" id="cmp-missing"></div>
+  <h3 class="sub">35–50 FAQ（紙上 4 題）</h3>
+  <div class="sheet-wrap">
+    <table class="sheet">
+      <thead><tr><th>問</th><th>答（≤80 字）</th><th>引用</th></tr></thead>
+      <tbody id="cmp-faq-body"></tbody>
+    </table>
+  </div>
+  <h3 class="sub">50–60 缺口五條</h3>
+  <div class="sheet-wrap">
+    <table class="sheet">
+      <thead><tr><th>還缺什麼才敢結論</th><th>下一步要找哪類文件（不是再問 AI）</th></tr></thead>
+      <tbody id="cmp-gap-body"></tbody>
+    </table>
+  </div>
+  <div class="toolbar"><button class="btn danger op" id="cmp-reset" type="button">清空</button></div>
+  <div class="result-banner" id="cmp-hint"></div>
+</section>
+</section>
+
+<section class="tab-panel" id="panel-present">
+<section class="material" id="present">
+  <h2>呈現核對（工作紙 4）</h2>
+  <p class="how"><strong>換成上班的樣子：</strong>資料表那四欄換成來源檔名／數字／條件／適用對象——就是你下週要貼進會議紀錄的那一張。</p>
+  <p class="how">對應螢幕右邊的「工作室」那排鍵。先寫四句大綱，鄰座改完才生成。只選一種。書面不能只交音檔。</p>
+  <div class="warn-strip">按鈕是免費的，<strong>按下去那一次不免費</strong>。你的帳號今天只夠生一次，所以不練「多試幾次」，練<strong>一次就中</strong>。</div>
+  <div class="field"><label>我選（螢幕上一共九個鍵）</label>
+    <select id="pre-kind">
+      <option value="">（選）</option>
+      <option>語音摘要</option>
+      <option>簡報</option>
+      <option>心智圖</option>
+      <option>報告</option>
+      <option>學習卡</option>
+      <option>測驗</option>
+      <option>資料表</option>
+      <option disabled>影片摘要（老師預產，不佔你那一次）</option>
+      <option disabled>資訊圖表（老師預產，不佔你那一次）</option>
+    </select>
+  </div>
+  <div class="field"><label>它在螢幕上的正式名稱（照抄，不要寫舊名字）</label><input type="text" id="pre-screen" placeholder="例：學習卡（不是「字卡」）、語音摘要（不是「音訊 Brief」）"></div>
+  <div class="field"><label>給誰看／看完一個決定</label><input type="text" id="pre-who"></div>
+  <div class="field"><label>四句大綱 1 主張</label><textarea id="pre-o1" rows="2"></textarea></div>
+  <div class="field"><label>2 證據（標來源）</label><textarea id="pre-o2" rows="2"></textarea></div>
+  <div class="field"><label>3 證據</label><textarea id="pre-o3" rows="2"></textarea></div>
+  <div class="field"><label>4 限制或反例</label><textarea id="pre-o4" rows="2"></textarea></div>
+  <div class="field"><label>鄰座簽名／改了什麼</label><input type="text" id="pre-peer"></div>
+
+  <h3 class="sub">按下去之前：三層都要做完</h3>
+  <p class="how">三根槓桿都是免費的，<strong>最有力的是①，不是③</strong>。①勾錯來源，後面兩層寫再好也救不回來。</p>
+  <div class="field"><label>① 勾——這次只勾哪幾份來源（寫檔名）</label><textarea id="pre-pick" rows="2" placeholder="只勾這次要用的。沒勾的它不會看，勾多了它會混。"></textarea></div>
+  <div class="field"><label>② 選——對話框裡我選了什麼（語言／格式／長度／數量）</label><textarea id="pre-opt" rows="2" placeholder="例：繁體中文；格式＝辯論；長度＝較短；卡片 10 張；難易度＝中"></textarea></div>
+
+  <h3 class="sub">③ 寫——焦點欄四句（＝早上的 ICIO，縮成四句）</h3>
+  <p class="how">四句，不是四段。九種輸出的焦點欄長得不一樣，要填的東西是同一套。填好版已放在下方「一次就中」提示詞卡。</p>
+  <div class="field"><label>第 1 句（I 任務）<strong>一定要帶數量</strong></label><textarea id="pre-f1" rows="2" placeholder="做〔什麼〕，〔幾頁／幾題／幾欄／第一層幾枝〕"></textarea></div>
+  <div class="field"><label>第 2 句（C 背景）</label><textarea id="pre-f2" rows="2" placeholder="給〔誰〕看，看完要做〔一個什麼決定〕"></textarea></div>
+  <div class="field"><label>第 3 句（I 輸入）</label><textarea id="pre-f3" rows="2" placeholder="只用我勾的來源／完全照我的四句大綱"></textarea></div>
+  <div class="field"><label>第 4 句（O 輸出）<strong>要有「不准自加」四個字</strong></label><textarea id="pre-f4" rows="2" placeholder="不准自加、沒寫的填「來源未載」、繁體中文"></textarea></div>
+  <div class="tip-strip">不要寫「幫我做得漂亮一點」。漂亮不是可核對的格子——模型會聽成寫長、加比喻、加它的常識。</div>
+  <div class="field"><label>按之前唸給誰聽了 15 秒（寫名字）</label><input type="text" id="pre-read" placeholder="唸出來才聽得出哪一句沒有數量"></div>
+
+  <details class="library" id="prompt-card-library">
+    <summary>九張「一次就中」提示詞卡</summary>
+    <div class="library-body">
+      <div class="library-intro"><strong>三層都免費，只有按下去那一下不免費。</strong>先勾來源，再選語言／格式／長度／數量，最後寫 ICIO 四句。按之前把四句唸給鄰座聽 15 秒，只問：「第 1 句有沒有數量？」</div>
+      <div class="mini-steps"><div><strong>① 勾</strong><br>只勾這次要用的來源。</div><div><strong>② 選</strong><br>語言先改中文（繁體），再選格式與數量。</div><div><strong>③ 寫</strong><br>做什麼＋幾個／給誰看／只用勾選來源／不准自加。</div></div>
+      <div class="library-grid">
+        <article class="prompt-card"><h4>1｜語音摘要</h4><p>用於聽著複習或比較來源分歧。官方與開箱文都要勾；選「辯論」最能聽爭點，或選 90 秒摘要。</p><div class="copy">聚焦〔每週運動分鐘數〕上幾份來源不一致的地方：官方建議與健身房見證文說法不同之處。每講一個數字都要說出自哪一份來源。不要加油打氣，不要用來源沒有的比喻。繁體中文。</div><p><strong>核對：</strong>抄三個主張，逐一回聊天要引用；來源沒有的標「誰在加油」。</p></article>
+        <article class="prompt-card"><h4>2｜簡報</h4><p>沒有四句大綱不要用。把大綱存成來源，只勾這一則；選「簡報投影片」與較短。</p><div class="copy">完全照我勾的那則大綱做〔8〕頁，不准自加觀點，不准漏頁。給〔45 歲、想開始運動、沒有教練的人〕看，看完要決定〔這週先做哪一種運動〕。每頁字要少。來源沒寫的寫「來源未載」。逐字確認繁體中文。</div><p><strong>核對：</strong>找出哪一頁是大綱沒有的；沒有就說每頁都對得上。</p></article>
+        <article class="prompt-card"><h4>3｜影片摘要</h4><p>本堂由老師預產，學員回家再按。選精簡或說明影片；這個欄位只吃一句話。</p><div class="copy">以〔中年人怎麼開始每週 150 分鐘〕為重心：先講一個結論，再舉來源裡的兩個證據，最後講一個限制（膝蓋不適者不適用）。不要出現來源沒有的數字。繁體中文。</div><p><strong>提醒：</strong>照介面例句的長度寫，不要塞成一段。</p></article>
+        <article class="prompt-card"><h4>4｜心智圖</h4><p>用於看資料怎麼連起來，不是做海報。勾這個主題的全部來源。</p><div class="copy">中年人開始規律運動。第一層不超過 7 枝，只長來源裡有的，不要背景故事。</div><p><strong>核對：</strong>指出一枝對應提取表哪一列；說不出來的回文字版查。</p></article>
+        <article class="prompt-card"><h4>5｜報告</h4><p>給沒看過來源的人讀。選「學習總覽」或最接近重點概念摘要的範本。</p><div class="copy">依我勾的來源做一份重點整理，分〔三〕個主題。每個主題：核心概念 3 條、常見誤解 2 條，每條標出處。誤解要能在來源裡找到正確說法來對照。來源沒寫的填「來源未載」，不要用常識補。繁體中文。</div><p><strong>核對：</strong>抽三條核心概念回聊天要引用。</p></article>
+        <article class="prompt-card"><h4>6｜學習卡</h4><p>螢幕名稱是「學習卡」（舊講義稱字卡）。選 12 張、中等難度。</p><div class="copy">每週分鐘數與強度。正面出一個問題，背面用來源裡的一句定義，再加一個最容易混淆的點。</div><p><strong>核對：</strong>抽三張；記下哪一張背面在來源裡找不到。</p></article>
+        <article class="prompt-card"><h4>7｜測驗</h4><p>用於檢查真的記得還是只讀過。選 8 題、中等、選擇題。</p><div class="copy">每週分鐘數、強度、適用年齡。只出來源裡寫死的題，不要出推斷題。每題附正解、其他選項為什麼錯、以及引用。</div><p><strong>核對：</strong>答錯後按 explain，抄它帶你回到的原文；只寫分數不算過。</p></article>
+        <article class="prompt-card"><h4>8｜資訊圖表</h4><p>本堂由老師預產。手機讀選直向、投影選橫向；風格不影響內容是否正確。</p><div class="copy">做一張〔中年人每週運動建議〕對照圖，三欄：每週分鐘數、強度、適用年齡，每一列標出處。來源沒寫的留白並標「來源未載」，不要用常識補。繁體中文。</div><p><strong>核對：</strong>評分看出處，不看選了哪個視覺風格。</p></article>
+        <article class="prompt-card"><h4>9｜資料表</h4><p>最接近今天的提取與歸納。把要比較的來源全勾。</p><div class="copy">四欄：來源檔名、每週分鐘數、強度、適用年齡。一份來源一列。來源沒寫的填「來源未載」，不要用常識補。繁體中文。</div><p><strong>核對：</strong>找一格來源未載；全滿就點引用，對不上的改回未載。</p></article>
+      </div>
+    </div>
+  </details>
+
+  <details class="library" id="focus-examples">
+    <summary>焦點欄：九組壞 → 好改寫</summary>
+    <div class="library-body">
+      <div class="library-grid">
+        <article class="focus-example"><h4>1｜語音摘要</h4><p class="bad"><strong>壞：</strong>把資料做成 podcast，講得生動一點。</p><p class="good"><strong>好：</strong>聚焦來源不一致處，每個數字標來源，不要加油打氣。</p><p>「生動」不能核對；「不一致」可以。</p></article>
+        <article class="focus-example"><h4>2｜簡報</h4><p class="bad"><strong>壞：</strong>把這 50 頁變成 20 頁投影片。</p><p class="good"><strong>好：</strong>完全照大綱做 8 頁，不准自加、不准漏頁，每頁字少、繁中。</p><p>一次過載，後段容易開始編。</p></article>
+        <article class="focus-example"><h4>3｜影片摘要</h4><p class="bad"><strong>壞：</strong>做一支介紹運動的影片。</p><p class="good"><strong>好：</strong>聚焦中年人如何開始 150 分鐘；一個結論、兩個來源證據、一個限制。</p><p>沒有重心，九十秒會花在背景故事。</p></article>
+        <article class="focus-example"><h4>4｜心智圖</h4><p class="bad"><strong>壞：</strong>幫我畫這個主題的心智圖。</p><p class="good"><strong>好：</strong>第一層不超過 7 枝，只長來源裡有的，不要背景故事。</p><p>不限枝數，常識會混進第一層。</p></article>
+        <article class="focus-example"><h4>5｜報告</h4><p class="bad"><strong>壞：</strong>做一份完整的報告。</p><p class="good"><strong>好：</strong>三主題；每題核心概念 3 條、誤解 2 條，每條標出處。</p><p>「完整」通常只會被理解成「長」。</p></article>
+        <article class="focus-example"><h4>6｜學習卡</h4><p class="bad"><strong>壞：</strong>做一些字卡幫我記。</p><p class="good"><strong>好：</strong>12 張；正面一問，背面來源定義加一個易混點。</p><p>沒數量與正反面規格，容易得到大量重複卡。</p></article>
+        <article class="focus-example"><h4>7｜測驗</h4><p class="bad"><strong>壞：</strong>出一些題目考我。</p><p class="good"><strong>好：</strong>8 題，只出來源寫死的題；附正解、錯因與引用。</p><p>不擋推斷題，就會出來源裡查不到答案的題。</p></article>
+        <article class="focus-example"><h4>8｜資訊圖表</h4><p class="bad"><strong>壞：</strong>做一張好看的資訊圖表。</p><p class="good"><strong>好：</strong>三欄對照，每列標出處；沒寫的標來源未載。</p><p>好看屬於風格選單，不該浪費焦點欄。</p></article>
+        <article class="focus-example"><h4>9｜資料表</h4><p class="bad"><strong>壞：</strong>把這些資料整理成表格。</p><p class="good"><strong>好：</strong>指定四欄、一份一列，沒寫的填來源未載。</p><p>不指定欄位，模型會挑剛好每格都填得滿的欄位。</p></article>
+      </div>
+    </div>
+  </details>
+
+  <h3 class="sub">三個主張回聊天核對</h3>
+  <div class="sheet-wrap">
+    <table class="sheet" style="min-width:560px">
+      <thead><tr><th>主張</th><th>來源有嗎</th><th>引用</th><th>若沒有，誰在加油</th></tr></thead>
+      <tbody id="pre-claim-body"></tbody>
+    </table>
+  </div>
+  <div class="field"><label>五句書面（給沒看過來源的人）</label><textarea id="pre-five" rows="6"></textarea></div>
+  <div class="toolbar"><button class="btn danger op" id="pre-reset" type="button">清空</button></div>
+  <div class="result-banner" id="pre-hint"></div>
+</section>
+</section>
+
+<section class="tab-panel" id="panel-oral">
+<section class="material" id="oral">
+  <h2>閉環與四句口頭（工作紙 5）</h2>
+  <p class="how">原料＝上堂可讀堆。不准換題。成功標準：洗至少丟 1；有引用；四句齊。</p>
+  <div class="field"><label>我選桌</label>
+    <select id="oral-desk">
+      <option value="">（選）</option>
+      <option>學習</option>
+      <option>工作</option>
+      <option>研究</option>
+    </select>
+  </div>
+  <details class="library" id="desk-prompts">
+    <summary>三桌提示詞卡（先選一條，再把編號寫進「問」）</summary>
+    <div class="library-body">
+      <div class="library-intro">三桌不是三個新題目，而是同一堆資料的三種問法。選一條走到底；工作紙「問」那格必須保留編號，例如 <code>E3</code> 或 <code>H4</code>。</div>
+      <div class="library-grid">
+        <article class="desk-prompt"><h4>學習桌｜E3／E4／E5</h4><p><strong>E3 讀書指南</strong></p><div class="copy">用我勾的來源做一份讀書指南，依主題分類。每個主題包含：3 個核心概念、2 個常見誤解、2 道附解答的考題。誤解必須能在來源中找到「正確說法」來對照。</div><p><strong>E4 一題一題考我：</strong>從基礎題開始，每次只出一題；我答完再給回饋、說明與引用。</p><p><strong>E5 費曼：</strong>我用自己的話解釋每週 150 分鐘；請依來源指出說對、漏了與可補強之處，不要因為流暢就當作我懂。</p><p>預測的考題不是真題，只可當複習清單。</p></article>
+        <article class="desk-prompt"><h4>工作桌｜E1</h4><p><strong>E1 會議紀錄</strong></p><div class="copy">依我勾的來源整理成三段：決議、待辦、未決。待辦要寫負責人與期限；來源沒有明講負責人的，一律寫「待確認」，不要替我指派。未決那段列出仍然不確定的問題。繁體中文。</div><p>看到人名就問：哪一句寫了這個人要做這件事？</p></article>
+        <article class="desk-prompt"><h4>研究桌｜B2／H4／H5</h4><p><strong>B2 矛盾與一致：</strong>並列一致與矛盾處，兩邊原句都標檔名，不替你裁決。</p><p><strong>H4 抓漏：</strong>找缺失資訊、未證實假設與來源矛盾，再提 5 個深度研究問題；避免一般摘要。</p><p><strong>H5 紅隊：</strong>審核最致命問題、隱含假設與照做前必答的 5 題，只根據來源。</p><div class="copy">角色：跨來源缺口分析師。找出缺失資訊、資料假設但未證實之處、以及來源之間的矛盾。再提供 5 個深度研究建議問題。避免一般摘要。沒有的不要編。</div></article>
+      </div>
+      <div class="tip-strip"><strong>共同收尾：</strong>「問」寫提示詞編號；「核」寫點過的引用與不一致；口頭四句的第四句不能省。</div>
+    </div>
+  </details>
+  <div class="field"><label>題目一句（仍是中年人規律運動／你的堆）</label><input type="text" id="oral-topic"></div>
+  <div class="field"><label>找</label><textarea id="oral-find" rows="2"></textarea></div>
+  <div class="field"><label>收（來源筆數）</label><input type="text" id="oral-keep"></div>
+  <div class="field"><label>洗（丟掉哪筆、為什麼；至少 1）</label><textarea id="oral-wash" rows="3"></textarea></div>
+  <div class="field"><label>問（主提示詞編號或 ICIO）</label><input type="text" id="oral-ask"></div>
+  <div class="field"><label>核（點過的引用／不一致）</label><textarea id="oral-check" rows="2"></textarea></div>
+  <div class="field"><label>出（給誰、格式）</label><input type="text" id="oral-out"></div>
+  <h3 class="sub">口頭四句</h3>
+  <div class="field"><label>1 我收了</label><textarea id="oral-s1" rows="2"></textarea></div>
+  <div class="field"><label>2 我丟掉</label><textarea id="oral-s2" rows="2"></textarea></div>
+  <div class="field"><label>3 有引用的發現</label><textarea id="oral-s3" rows="2"></textarea></div>
+  <div class="field"><label>4 我不敢結論的</label><textarea id="oral-s4" rows="2"></textarea></div>
+  <div class="field"><label>缺口兩條＋文獻類型</label><textarea id="oral-gap" rows="3"></textarea></div>
+  <h3 class="sub">最後 5 分鐘：我自己的案子</h3>
+  <p class="how">下課前老師留 5 分鐘，一人一題。問的是<strong>你手上真的要交的那份東西</strong>怎麼套這套方法——不是問工具怎麼按。現在先寫下來，才問得出來。</p>
+  <div class="field"><label>我手上那份東西是</label><input type="text" id="oral-mycase" placeholder="例：週一要交的供應商比價、季度報告、一份要給主管看的摘要"></div>
+  <div class="field"><label>我卡在哪一步（找／收／洗／問／核／出）</label><input type="text" id="oral-mystep" placeholder="例：卡在「洗」——三份報價都想留，不知道該丟哪一份"></div>
+  <div class="field"><label>我要問的那一題（一句話）</label><textarea id="oral-myq" rows="2" placeholder="例：我這種材料，三個欄位該定哪三個？"></textarea></div>
+  <div class="toolbar"><button class="btn danger op" id="oral-reset" type="button">清空</button></div>
+  <div class="result-banner" id="oral-hint"></div>
+</section>
+</section>
+
+<section class="tab-panel" id="panel-links">
+<section class="material" id="links">
+  <h2>官方入口（補票）</h2>
+  <p class="how">本堂不重跑新聞搜尋當主線。只剩截圖、要補存文字時才用。第一步仍是鈕 1。</p>
+  <div class="warn-strip">示範第一步用鈕 1，不要先按鈕 3。</div>
+  <div class="link-btns">
+    <a class="btn primary" href="https://www.gov.mo/zh-hant/news-search/" target="_blank" rel="noopener">1. 新聞搜尋</a>
+    <a class="btn" href="https://www.gov.mo/zh-hant/news/" target="_blank" rel="noopener">2. 新聞列表</a>
+    <a class="btn" href="https://www.gov.mo/zh-hant/news/838735/" target="_blank" rel="noopener">3. 起來。鬆一鬆</a>
+  </div>
+</section>
+</section>
+</main>
+
+<script>
+'use strict';
+const LS_PREFIX = 'aio.';
+const TAB_OF = {prompt:'prompt',vpn:'vpn',feed:'feed',extract:'extract',synth:'synth',compare:'compare',present:'present',oral:'oral',links:'links'};
+function esc(s){ return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+function lsGet(k, d){ try{ const v = localStorage.getItem(LS_PREFIX+k); return v===null ? d : JSON.parse(v);}catch(e){ return d; } }
+function lsSet(k, v){ try{ localStorage.setItem(LS_PREFIX+k, JSON.stringify(v)); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(LS_PREFIX+k); }catch(e){} }
+function showTab(t){
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-'+t));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+}
+document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => { showTab(b.dataset.tab); history.replaceState(null,'','#'+b.dataset.tab); }));
+function applyHash(){
+  const h = (location.hash||'').slice(1);
+  if (TAB_OF[h]) { showTab(TAB_OF[h]); const el = document.getElementById(h); if (el) el.scrollIntoView(); }
+  else showTab('prompt');
+}
+window.addEventListener('hashchange', applyHash);
+
+function bindObj(idMap, key, hintFn){
+  const load = () => {
+    const raw = lsGet(key, {});
+    Object.keys(idMap).forEach(k => {
+      const el = document.getElementById(idMap[k]);
+      if (el) el.value = raw[k] || '';
+    });
+    if (hintFn) hintFn();
+  };
+  const save = () => {
+    const o = {};
+    Object.keys(idMap).forEach(k => { o[k] = document.getElementById(idMap[k]).value; });
+    lsSet(key, o);
+    if (hintFn) hintFn();
+  };
+  Object.keys(idMap).forEach(k => {
+    const el = document.getElementById(idMap[k]);
+    if (el) el.addEventListener('input', save);
+  });
+  return {load, save};
+}
+
+const PROMPT_MAP = {fuzzy:'prompt-fuzzy',role:'prompt-role',task:'prompt-task',dont:'prompt-dont',format:'prompt-format',shot:'prompt-shot',i1:'prompt-i1',c:'prompt-c',i2:'prompt-i2',o:'prompt-o',good:'prompt-good'};
+function promptHint(){
+  const role = document.getElementById('prompt-role').value.trim();
+  const dont = document.getElementById('prompt-dont').value.trim();
+  const fmt = document.getElementById('prompt-format').value.trim();
+  const o = document.getElementById('prompt-o').value.trim();
+  const r = document.getElementById('prompt-hint');
+  const ok = role && dont && fmt && (o.indexOf('未載')>=0 || fmt.indexOf('未載')>=0);
+  r.textContent = ok ? '優質版具備角色、不要做、格式。' : '達標：角色、不要做、格式都有字；O 或格式裡要有「來源未載」。';
+  r.className = 'result-banner show '+(ok?'good':'mid');
+}
+const promptBind = bindObj(PROMPT_MAP, 'prompt', promptHint);
+document.getElementById('prompt-build').addEventListener('click', () => {
+  const g = document.getElementById('prompt-good');
+  g.value = [
+    '角色：'+(document.getElementById('prompt-role').value||''),
+    '任務：'+(document.getElementById('prompt-task').value||document.getElementById('prompt-i1').value||''),
+    '背景：'+(document.getElementById('prompt-c').value||''),
+    '輸入：'+(document.getElementById('prompt-i2').value||''),
+    '不要：'+(document.getElementById('prompt-dont').value||''),
+    '輸出：'+(document.getElementById('prompt-o').value||document.getElementById('prompt-format').value||''),
+    document.getElementById('prompt-shot').value ? '範例：'+document.getElementById('prompt-shot').value : ''
+  ].filter(Boolean).join('\n');
+  promptBind.save();
+});
+document.getElementById('prompt-reset').addEventListener('click', () => { lsDel('prompt'); promptBind.load(); document.getElementById('prompt-fuzzy').value='幫我整理這些運動資料。'; promptBind.save(); });
+promptBind.load();
+
+const VPN_MAP = {off:'vpn-off-wifi',on:'vpn-on-wifi',google:'vpn-google',only:'vpn-only',status:'vpn-status',where:'vpn-where',q1:'vpn-q1',q2:'vpn-q2',q3:'vpn-q3',q4:'vpn-q4'};
+function vpnHint(){
+  const only = document.getElementById('vpn-only').value;
+  const st = document.getElementById('vpn-status').value;
+  const q3 = document.getElementById('vpn-q3').value;
+  const four = ['vpn-off-wifi','vpn-on-wifi','vpn-google','vpn-only'].every(id => document.getElementById(id).value.trim());
+  const backup = ['vpn-q1','vpn-q2','vpn-q3','vpn-q4'].every(id => document.getElementById(id).value.trim());
+  const ok = (st==='connected' && only.indexOf('瀏覽器')>=0) || (st==='backup' && backup) || (four && only.indexOf('瀏覽器')>=0);
+  const r = document.getElementById('vpn-hint');
+  r.textContent = ok ? '過關：已連線或備案有字，且寫了只保護這個瀏覽器。' : '達標：四格有字且含「瀏覽器」；已連線或備案四題。換瀏覽器＝不受保護。';
+  r.className = 'result-banner show '+(ok?'good':'mid');
+}
+const vpnBind = bindObj(VPN_MAP, 'vpn', vpnHint);
+document.getElementById('vpn-reset').addEventListener('click', () => { lsDel('vpn'); vpnBind.load(); });
+vpnBind.load();
+
+function readAisPile(){
+  try{
+    const v = localStorage.getItem('ais.pile');
+    if (!v) return null;
+    const arr = JSON.parse(v);
+    return Array.isArray(arr) ? arr : null;
+  }catch(e){ return null; }
+}
+const FEED_EMPTY = () => ({content:'',who:'',read:'',feed:'',why:''});
+function feedRows(){
+  const raw = lsGet('feed', null);
+  if (Array.isArray(raw) && raw.length>=6) return raw.map(r => Object.assign(FEED_EMPTY(), r||{}));
+  return [0,1,2,3,4,5].map(FEED_EMPTY);
+}
+function optHtml(opts, val){
+  return opts.map(o => '<option'+(o===val?' selected':'')+' value="'+esc(o)+'">'+(o||'（選）')+'</option>').join('');
+}
+function feedRender(){
+  const rows = feedRows();
+  const box = document.getElementById('feed-body');
+  box.innerHTML = '';
+  const feedOpts = ['','餵','不餵','例外'];
+  const readOpts = ['','精讀','略讀','淘汰'];
+  rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><textarea data-k="content" rows="2"></textarea></td>'+
+      '<td><input type="text" data-k="who"></td>'+
+      '<td><select data-k="read">'+optHtml(readOpts, r.read)+'</select></td>'+
+      '<td><select data-k="feed">'+optHtml(feedOpts, r.feed)+'</select></td>'+
+      '<td><textarea data-k="why" rows="2"></textarea></td>';
+    tr.querySelector('[data-k=content]').value = r.content||'';
+    tr.querySelector('[data-k=who]').value = r.who||'';
+    tr.querySelectorAll('input,textarea,select').forEach(el => el.addEventListener('input', () => {
+      const cur = feedRows();
+      cur[i][el.dataset.k] = el.value;
+      lsSet('feed', cur);
+      feedHint();
+    }));
+    box.appendChild(tr);
+  });
+  feedHint();
+}
+function feedHint(){
+  const rows = feedRows();
+  const filled = rows.filter(r => (r.content||'').trim() || (r.who||'').trim());
+  const feeded = filled.filter(r => r.feed==='餵');
+  const r = document.getElementById('feed-hint');
+  r.textContent = '已填 '+filled.length+' 列、餵 '+feeded.length+' 列。精讀應餵。';
+  r.className = 'result-banner show '+(filled.length>=4 && feeded.length>=2 ? 'good':'mid');
+}
+function feedImport(){
+  const pile = readAisPile();
+  const banner = document.getElementById('feed-src');
+  if (!pile || !pile.length){
+    banner.textContent = '讀不到 ais.pile。請抄上堂紙本／照片。兩個活動頁須同一個瀏覽器；file:// 常常互讀失敗。';
+    return;
+  }
+  banner.textContent = '已讀到上堂可讀堆 '+pile.length+' 列。請補餵／不餵。';
+  const rows = pile.slice(0,8).map(p => Object.assign(FEED_EMPTY(), {
+    content: p.content||'', who: p.who||'', read: p.read||'',
+    feed: p.read==='精讀' ? '餵' : (p.read==='淘汰' ? '不餵' : '')
+  }));
+  while (rows.length<6) rows.push(FEED_EMPTY());
+  lsSet('feed', rows);
+  feedRender();
+}
+document.getElementById('feed-import').addEventListener('click', feedImport);
+document.getElementById('feed-reset').addEventListener('click', () => { lsDel('feed'); feedRender(); });
+feedRender();
+feedImport();
+
+const EXTRACT_EMPTY = () => ({claim:'',evidence:'',source:'',trust:''});
+const TRUST_OPTS = ['','我信','存疑','存疑／不當處方'];
+function extractRows(){
+  const raw = lsGet('extract', null);
+  if (Array.isArray(raw) && raw.length === 8) return raw.map(r => Object.assign(EXTRACT_EMPTY(), r||{}));
+  return [0,1,2,3,4,5,6,7].map(EXTRACT_EMPTY);
+}
+function extractRender(){
+  const rows = extractRows();
+  const box = document.getElementById('extract-body');
+  box.innerHTML = '';
+  rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><textarea data-k="claim" rows="2"></textarea></td>'+
+      '<td><textarea data-k="evidence" rows="2"></textarea></td>'+
+      '<td><input type="text" data-k="source" placeholder="檔名"></td>'+
+      '<td><select data-k="trust">'+optHtml(TRUST_OPTS, r.trust)+'</select></td>';
+    tr.querySelector('[data-k=claim]').value = r.claim||'';
+    tr.querySelector('[data-k=evidence]').value = r.evidence||'';
+    tr.querySelector('[data-k=source]').value = r.source||'';
+    tr.querySelectorAll('input,textarea,select').forEach(el => el.addEventListener('input', () => {
+      const cur = extractRows();
+      cur[i][el.dataset.k] = el.value;
+      lsSet('extract', cur);
+      extractHint();
+    }));
+    box.appendChild(tr);
+  });
+  extractHint();
+}
+function extractHint(){
+  const rows = extractRows();
+  const filled = rows.filter(r => (r.claim||'').trim());
+  const srcs = new Set(filled.map(r => (r.source||'').trim()).filter(Boolean));
+  const doubt = filled.filter(r => (r.trust||'').indexOf('存疑')>=0);
+  const r = document.getElementById('extract-hint');
+  r.textContent = '已填 '+filled.length+' 列、'+srcs.size+' 個出處、存疑 '+doubt.length+' 列。達標：4 列、2 個出處、1 列存疑。';
+  r.className = 'result-banner show '+(filled.length>=4 && srcs.size>=2 && doubt.length>=1 ? 'good' : 'mid');
+}
+document.getElementById('extract-reset').addEventListener('click', () => { lsDel('extract'); extractRender(); });
+extractRender();
+
+const SYNTH_IDS = {agree:'synth-agree', fight:'synth-fight', next:'synth-next'};
+function synthHint(){
+  const a = document.getElementById('synth-agree').value.trim();
+  const f = document.getElementById('synth-fight').value.trim();
+  const n = document.getElementById('synth-next').value.trim();
+  const r = document.getElementById('synth-hint');
+  r.textContent = (a&&f&&n) ? '三段都有字。' : '達標：三段都有字，第三段必須是你自己的話。';
+  r.className = 'result-banner show '+((a&&f&&n)?'good':'mid');
+}
+const synthBind = bindObj(SYNTH_IDS, 'synth', synthHint);
+document.getElementById('synth-reset').addEventListener('click', () => { lsDel('synth'); synthBind.load(); });
+synthBind.load();
+
+function renderGrid(id, key, n, cols, empty, hintFn){
+  function rows(){
+    const raw = lsGet(key, null);
+    if (Array.isArray(raw) && raw.length===n) return raw.map(r => Object.assign(empty(), r||{}));
+    return Array.from({length:n}, empty);
+  }
+  function draw(){
+    const box = document.getElementById(id);
+    box.innerHTML = '';
+    rows().forEach((r, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = cols.map(c => {
+        if (c.type==='textarea') return '<td><textarea data-k="'+c.k+'" rows="2"></textarea></td>';
+        return '<td><input type="text" data-k="'+c.k+'"></td>';
+      }).join('');
+      cols.forEach(c => { tr.querySelector('[data-k='+c.k+']').value = r[c.k]||''; });
+      tr.querySelectorAll('input,textarea').forEach(el => el.addEventListener('input', () => {
+        const cur = rows();
+        cur[i][el.dataset.k] = el.value;
+        lsSet(key, cur);
+        if (hintFn) hintFn();
+      }));
+      box.appendChild(tr);
+    });
+  }
+  draw();
+  return {reset(){ lsDel(key); draw(); }};
+}
+function cmpHint(){
+  const missEl = document.getElementById('cmp-missing');
+  if (!missEl) return;
+  const miss = missEl.value.trim();
+  const faq = (lsGet('cmpF',[])||[]).filter(r => r && (r.q||'').trim() && (r.cite||'').trim());
+  const gap = (lsGet('cmpG',[])||[]).filter(r => r && (r.gap||'').trim() && (r.next||'').trim() && r.next.indexOf('問 AI')<0);
+  const r = document.getElementById('cmp-hint');
+  const ok = miss && faq.length>=4 && gap.length>=5;
+  r.textContent = ok ? '對照有未載、FAQ 有引用、缺口五條。' : '達標：未載格子、FAQ 4 題有引用、缺口五條且不是再問 AI。現況 FAQ '+faq.length+'、缺口 '+gap.length+'。';
+  r.className = 'result-banner show '+(ok?'good':'mid');
+}
+const cmpQ = renderGrid('cmp-q-body','cmpQ',5,[{k:'q',type:'textarea'},{k:'src'}], () => ({q:'',src:''}), cmpHint);
+const cmpT = renderGrid('cmp-table-body','cmpT',4,[{k:'name'},{k:'c1'},{k:'c2'},{k:'c3'},{k:'cite'}], () => ({name:'',c1:'',c2:'',c3:'',cite:''}), cmpHint);
+const cmpF = renderGrid('cmp-faq-body','cmpF',4,[{k:'q',type:'textarea'},{k:'a',type:'textarea'},{k:'cite'}], () => ({q:'',a:'',cite:''}), cmpHint);
+const cmpG = renderGrid('cmp-gap-body','cmpG',5,[{k:'gap',type:'textarea'},{k:'next',type:'textarea'}], () => ({gap:'',next:''}), cmpHint);
+const CMP_MAP = {open:'cmp-open',cols:'cmp-cols',missing:'cmp-missing'};
+const cmpBind = bindObj(CMP_MAP, 'cmpMeta', cmpHint);
+document.getElementById('cmp-reset').addEventListener('click', () => {
+  lsDel('cmpQ'); lsDel('cmpT'); lsDel('cmpF'); lsDel('cmpG'); lsDel('cmpMeta');
+  cmpQ.reset(); cmpT.reset(); cmpF.reset(); cmpG.reset(); cmpBind.load();
+});
+cmpBind.load(); cmpHint();
+
+const PRE_COUNT_RE = /[0-9０-９一二三四五六七八九十兩]/;
+function preHint(){
+  const v = (id) => document.getElementById(id).value.trim();
+  const r = document.getElementById('pre-hint');
+  // 達標線與教師筆記 #present 同一條：四句大綱含限制、鄰座改過、書面五句，
+  // 外加生成前三層（勾／選／寫），第 1 句帶數量、第 4 句有「不准自加」。
+  const miss = [];
+  if (!v('pre-o1') || !v('pre-o4')) miss.push('四句大綱（要含限制那句）');
+  if (!v('pre-peer')) miss.push('鄰座簽名');
+  if (!v('pre-five')) miss.push('書面五句');
+  if (!v('pre-screen')) miss.push('照抄螢幕上的鍵名');
+  if (!v('pre-pick')) miss.push('① 勾：這次只用哪幾份來源');
+  if (!v('pre-opt')) miss.push('② 選：語言／格式／長度／數量');
+  const f = ['pre-f1','pre-f2','pre-f3','pre-f4'].map(v);
+  if (f.some((s) => !s)) miss.push('③ 寫：焦點欄四句');
+  else {
+    if (!PRE_COUNT_RE.test(f[0])) miss.push('第 1 句要帶數量（幾頁／幾題／幾欄／第一層幾枝）');
+    if (!f[3].includes('不准自加')) miss.push('第 4 句要有「不准自加」四個字');
+  }
+  if (!v('pre-read')) miss.push('按之前唸給鄰座聽 15 秒');
+  const ok = miss.length === 0;
+  r.textContent = ok
+    ? '三層都做完了，四句有數量也有「不准自加」。可以按——今天只按這一次。'
+    : '還不能按，缺：' + miss.join('、') + '。';
+  r.className = 'result-banner show '+(ok?'good':'mid');
+}
+const PRE_MAP = {kind:'pre-kind',screen:'pre-screen',who:'pre-who',o1:'pre-o1',o2:'pre-o2',o3:'pre-o3',o4:'pre-o4',peer:'pre-peer',pick:'pre-pick',opt:'pre-opt',f1:'pre-f1',f2:'pre-f2',f3:'pre-f3',f4:'pre-f4',read:'pre-read',five:'pre-five'};
+const preC = renderGrid('pre-claim-body','preC',3,[{k:'claim',type:'textarea'},{k:'has'},{k:'cite'},{k:'extra'}], () => ({claim:'',has:'',cite:'',extra:''}), preHint);
+const preBind = bindObj(PRE_MAP, 'present', preHint);
+document.getElementById('pre-reset').addEventListener('click', () => { lsDel('present'); lsDel('preC'); preC.reset(); preBind.load(); });
+preBind.load();
+
+const ORAL_MAP = {desk:'oral-desk',topic:'oral-topic',find:'oral-find',keep:'oral-keep',wash:'oral-wash',ask:'oral-ask',check:'oral-check',out:'oral-out',s1:'oral-s1',s2:'oral-s2',s3:'oral-s3',s4:'oral-s4',gap:'oral-gap'};
+function oralHint(){
+  const wash = document.getElementById('oral-wash').value.trim();
+  const s4 = document.getElementById('oral-s4').value.trim();
+  const s3 = document.getElementById('oral-s3').value.trim();
+  const r = document.getElementById('oral-hint');
+  const ok = wash && s3 && s4;
+  r.textContent = ok ? '有丟掉的理由、有引用發現、有第四句。' : '達標：洗至少丟 1；第三句有引用；第四句不敢結論。沒有第四句不算完。';
+  r.className = 'result-banner show '+(ok?'good':'mid');
+}
+const oralBind = bindObj(ORAL_MAP, 'oral', oralHint);
+document.getElementById('oral-reset').addEventListener('click', () => { lsDel('oral'); oralBind.load(); });
+oralBind.load();
+
+applyHash();
+</script>
+</body>
+</html>
