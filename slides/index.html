@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI輔助資料搜尋及整理（下）：整理篇｜投影片（學員版）</title>
+<style>
+:root{
+  --cream:#F2EEE5;--cream-soft:#EAE4D5;--cream-line:#DCD4BF;
+  --ink:#1B1F24;--ink-muted:#5A5E66;--ink-faint:#6D7079;
+  --slate:#3F5B7E;--slate-dark:#2A3B53;--slate-tint:#DDE3EB;
+  --accent:#A4452F;--accent-soft:#EFD5CC;
+  --ok:#2F6B4A;--warn:#B5781E;--bad:#A33524;
+  --ch1:#3F5B7E;--ch2:#A4452F;--ch3:#2F6B4A;--ch4:#B5781E;
+  --body-font:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:"JetBrains Mono","Fira Code","SF Mono",Menlo,Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;height:100vh;background:#0a0a0a;font-family:var(--body-font);color:var(--ink)}
+.slide{display:none;position:relative}
+.slide.active{display:flex;flex-direction:column;justify-content:center;height:100vh;width:100vw;background:var(--cream);padding:clamp(28px,4vw,72px) clamp(28px,6vw,110px) clamp(52px,6vh,80px);animation:fadeIn .35s ease;overflow-y:auto}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.progress-rail{position:fixed;top:0;left:0;right:0;display:flex;gap:3px;padding:10px 16px;z-index:20}
+.tick{flex:1;height:4px;border-radius:2px;background:rgba(27,31,36,.14)}
+.tick.past{background:rgba(27,31,36,.4)}
+.tick.active{background:var(--accent)}
+.nav-controls{position:fixed;bottom:14px;right:16px;display:flex;gap:8px;z-index:20}
+.nav-controls button{font-family:var(--body-font);font-size:14px;padding:8px 16px;border:1px solid var(--cream-line);background:#FAF7EF;color:var(--ink);border-radius:999px;cursor:pointer}
+.nav-controls button:hover{background:var(--cream-soft)}
+.slide-num{display:flex;align-items:center;font-size:12px;letter-spacing:.12em;color:var(--ink-faint);font-family:var(--mono)}
+.slide-meta{position:absolute;bottom:16px;left:clamp(28px,6vw,110px);right:clamp(28px,6vw,110px);display:flex;justify-content:space-between;font-size:12px;letter-spacing:.08em;color:var(--ink-faint)}
+.slide-meta .num{font-family:var(--mono)}
+.timer-chip{display:none}
+.slide-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
+.eyebrow{font-size:12px;letter-spacing:.22em;color:var(--ink-faint);font-weight:700}
+.caption{font-size:12px;letter-spacing:.1em;color:var(--ink-faint)}
+.assertion{font-size:clamp(22px,2.8vw,48px);line-height:1.3;font-weight:800;letter-spacing:.01em;max-width:22em}
+.focal{color:var(--accent)}
+.lead{margin-top:14px;font-size:clamp(15px,1.4vw,20px);line-height:1.75;color:var(--ink-muted);max-width:48em}
+.body-p{margin-top:12px;font-size:clamp(15px,1.3vw,19px);line-height:1.75;color:var(--ink);max-width:52em}
+.pill{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.06em;padding:5px 14px;border-radius:999px;margin:4px 6px 4px 0}
+.pill.slate{background:var(--slate-tint);color:var(--slate-dark)}
+.pill.accent{background:var(--accent-soft);color:var(--accent)}
+.pill.ok{background:#E0EDE5;color:var(--ok)}
+.pill.warn{background:#F3E6CC;color:var(--warn)}
+.ch-pill{display:inline-block;font-size:14px;font-weight:700;letter-spacing:.12em;padding:6px 18px;border-radius:999px}
+.ch-pill.ch1{color:var(--ch1);background:rgba(63,91,126,.1)}
+.ch-pill.ch2{color:var(--ch2);background:rgba(164,69,47,.1)}
+.ch-pill.ch3{color:var(--ch3);background:rgba(47,107,74,.1)}
+.ch-pill.ch4{color:var(--ch4);background:rgba(181,120,30,.12)}
+.flow-list{display:flex;flex-direction:column;gap:10px;margin-top:18px;max-width:58em}
+.flow-item{display:flex;gap:14px;align-items:flex-start;background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:12px 16px}
+.step-num{flex:0 0 32px;height:32px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.ch1 .step-num{background:var(--ch1)}.ch2 .step-num{background:var(--ch2)}.ch3 .step-num{background:var(--ch3)}.ch4 .step-num{background:var(--ch4)}
+.flow-body p{margin-top:4px;color:var(--ink-muted);font-size:clamp(13px,1.15vw,16px);line-height:1.65}
+.flow-body ul.scan{margin-top:6px;max-width:none}
+.flow-body strong{font-size:clamp(14px,1.25vw,17px)}
+.compare-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px;max-width:60em}
+.compare-card{background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:18px 20px}
+.compare-card.bad{border-top:3px solid var(--bad)}
+.compare-card.good{border-top:3px solid var(--ok)}
+.compare-card h3{font-size:clamp(15px,1.3vw,18px);margin-bottom:8px}
+.compare-card p{color:var(--ink-muted);font-size:clamp(14px,1.2vw,17px);line-height:1.7}
+.tip-box{margin-top:16px;background:var(--slate-tint);border-left:4px solid var(--slate);border-radius:0 10px 10px 0;padding:12px 16px;max-width:56em;color:var(--slate-dark);font-size:clamp(14px,1.15vw,17px);line-height:1.7}
+.warning-box{margin-top:16px;background:#F6E3DF;border-left:4px solid var(--bad);border-radius:0 10px 10px 0;padding:12px 16px;max-width:56em;color:var(--bad);font-size:clamp(14px,1.15vw,17px);line-height:1.7}
+.keypoint{position:relative;border:2px solid var(--ink);border-radius:12px;padding:22px 22px 16px;margin-top:20px;background:#FAF7EF;max-width:56em}
+.keypoint::before{content:attr(data-label);position:absolute;top:-13px;left:18px;background:var(--cream);padding:0 12px;font-size:13px;font-weight:800;letter-spacing:.16em}
+.keypoint.accent-border{border-color:var(--accent)}
+.keypoint ul{list-style:none}
+.keypoint li{padding:7px 0 7px 26px;position:relative;font-size:clamp(14px,1.2vw,17px);line-height:1.65;border-bottom:1px dashed var(--cream-line)}
+.keypoint li:last-child{border-bottom:none}
+.keypoint li::before{content:"—";position:absolute;left:0;color:var(--accent);font-weight:800}
+.task-frame{margin-top:16px;font-family:var(--mono);font-size:clamp(13px,1.1vw,16px);line-height:1.8;border-left:4px solid var(--accent);background:#FAF7EF;border-radius:0 10px 10px 0;padding:14px 18px;max-width:58em;white-space:pre-wrap}
+table.data{width:100%;max-width:64em;border-collapse:collapse;margin-top:16px}
+table.data th{font-size:12px;font-weight:800;letter-spacing:.08em;text-align:left;padding:8px 10px;border-bottom:2px solid var(--ink)}
+table.data td{padding:10px 10px;border-bottom:1px solid var(--cream-line);font-size:clamp(13px,1.1vw,16px);line-height:1.55;vertical-align:top}
+table.data.compact th,table.data.compact td{font-size:clamp(11px,0.95vw,13px);padding:7px 6px;letter-spacing:0}
+.quiz-box{margin-top:16px;background:#FAF7EF;border:1px solid var(--cream-line);border-radius:12px;padding:24px 26px;max-width:54em}
+.quiz-q{font-size:clamp(18px,1.8vw,26px);font-weight:800;line-height:1.5;margin-bottom:6px}
+.opt{display:block;border:1px solid var(--cream-line);background:#fff;border-radius:8px;padding:13px 18px;margin-top:10px;cursor:pointer;font-size:clamp(14px,1.25vw,17px);line-height:1.6;transition:background .15s}
+.opt:hover{background:var(--cream-soft)}
+.opt.wrong{background:#F6E3DF;border-color:var(--bad);color:var(--bad)}
+.opt.correct{background:#E4EFE8;border-color:var(--ok);color:var(--ok);font-weight:700}
+.opt.correct::after{content:" ✓"}
+.quiz-hint{margin-top:16px;background:var(--slate-tint);border-left:4px solid var(--slate);border-radius:0 8px 8px 0;padding:12px 16px;color:var(--slate-dark);font-size:clamp(13px,1.15vw,16px);line-height:1.7}
+.quiz-explain{margin-top:12px;background:#E4EFE8;border-left:4px solid var(--ok);border-radius:0 8px 8px 0;padding:12px 16px;color:var(--ok);font-size:clamp(13px,1.15vw,16px);line-height:1.7}
+.title-slide{text-align:center;align-items:center;overflow:hidden}
+.title-slide .title{font-size:clamp(30px,4.6vw,68px);font-weight:800;line-height:1.3;letter-spacing:.01em}
+.title-slide .subtitle{margin-top:18px;font-size:clamp(16px,1.8vw,24px);color:var(--ink-muted);line-height:1.7}
+.title-slide .meta-line{margin-top:26px;font-size:clamp(13px,1.2vw,16px);letter-spacing:.08em;color:var(--ink-faint)}
+.title-slide .pills-row{margin-top:26px}
+.accent{color:var(--accent)}
+.slide.dark{background:var(--slate-dark);color:var(--cream)}
+.slide.dark .title{color:var(--cream)}
+.slide.dark .subtitle{color:rgba(242,238,229,.75)}
+.slide.dark .meta-line{color:rgba(242,238,229,.55)}
+.slide.dark .ch-pill{color:var(--cream);background:rgba(242,238,229,.12);border:1px solid rgba(242,238,229,.3)}
+.slide.dark .slide-meta{color:rgba(242,238,229,.5)}
+.slide.dark .timer-chip{color:rgba(242,238,229,.6);border-color:rgba(242,238,229,.25);background:rgba(242,238,229,.08)}
+.opener-tag{margin-top:30px;font-size:clamp(15px,1.6vw,22px);color:rgba(242,238,229,.85);line-height:1.8;max-width:36em}
+.end-line{margin-top:14px;font-size:clamp(16px,1.6vw,22px);line-height:1.7;color:rgba(242,238,229,.8);max-width:28em}
+.example-block{margin-top:16px;background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:16px 18px;max-width:58em;font-size:clamp(13px,1.15vw,16px);line-height:1.75;color:var(--ink-muted)}
+.example-block strong{color:var(--ink)}
+.example-block.scroll{max-height:38vh;overflow:auto}
+.confirm{margin-top:14px;padding:10px 16px;background:rgba(47,107,74,.06);border-left:3px solid var(--ok);border-radius:0 8px 8px 0;font-size:clamp(14px,1.15vw,17px);color:var(--ok)}
+/* Concept images: absolute right column, same contract as YST 啟動會議.html */
+.slide:has(.figure),.slide:has(.figures){padding-right:calc(min(340px,28vw) + 56px);overflow:hidden}
+.slide:has(.figure) .timer-chip,.slide:has(.figures) .timer-chip{right:calc(min(340px,28vw) + 56px)}
+.figure{position:absolute;right:40px;top:50%;transform:translateY(-50%);width:min(340px,28vw);z-index:1;margin:0;border-radius:16px;overflow:hidden;border:1px solid rgba(27,31,36,.10);box-shadow:0 10px 28px rgba(27,31,36,.12);background:var(--cream)}
+.figure img{display:block;width:100%;height:auto;max-height:min(360px,56vh);object-fit:contain;background:var(--cream)}
+.figures{position:absolute;right:40px;top:50%;transform:translateY(-50%);width:min(340px,28vw);z-index:1;display:flex;flex-direction:column;gap:12px}
+.figures .figure{position:relative;right:auto;top:auto;transform:none;width:100%}
+.figures .figure img{max-height:min(220px,32vh)}
+.cover-art{position:absolute;inset:0;background-position:78% 82%;background-size:cover;opacity:.36}
+.cover-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(242,238,229,.88) 0%,rgba(242,238,229,.62) 40%,rgba(242,238,229,.78) 70%,rgba(242,238,229,.94) 100%)}
+.title-slide > *:not(.cover-art):not(.cover-scrim):not(.slide-meta){position:relative;z-index:2}
+.title-slide .slide-meta{position:absolute;z-index:3}
+.figure.shot{width:min(460px,36vw)}
+.slide:has(.figure.shot){padding-right:calc(min(460px,36vw) + 56px)}
+.slide:has(.figure.shot) .timer-chip{right:calc(min(460px,36vw) + 56px)}
+.url-box{margin-top:16px;background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:14px 18px;max-width:56em;font-size:clamp(14px,1.15vw,17px);line-height:1.8}
+.url-box a{color:var(--slate);word-break:break-all;font-family:var(--mono);font-size:clamp(12px,1.05vw,15px)}
+ul.plain,ol.plain{margin-top:14px;max-width:54em;padding-left:1.35em}
+ul.plain li,ol.plain li{margin:7px 0;font-size:clamp(14px,1.2vw,18px);line-height:1.7;color:var(--ink)}
+ul.scan{list-style:none;padding-left:0;max-width:54em}
+ul.scan li{position:relative;padding:6px 0 6px 22px;border-bottom:1px dashed var(--cream-line);font-size:clamp(14px,1.2vw,18px);line-height:1.65}
+ul.scan li:last-child{border-bottom:none}
+ul.scan li::before{content:"";position:absolute;left:0;top:14px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+h3.subhead{margin-top:18px;font-size:clamp(16px,1.4vw,20px);font-weight:800}
+.cue{display:none;margin-top:12px;max-width:56em}
+body.teacher .cue{display:block}
+.cue summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--ink-faint);border:1px dashed var(--cream-line);background:transparent;padding:5px 12px;border-radius:999px}
+.cue summary::-webkit-details-marker{display:none}
+.cue summary::after{content:"▸";font-size:11px}
+.cue[open] summary::after{content:"▾"}
+.cue[open] summary{color:var(--ok);border-color:var(--ok);background:rgba(47,107,74,.06)}
+.cue .cue-body{margin-top:8px;padding:10px 16px;background:rgba(47,107,74,.06);border-left:3px solid var(--ok);border-radius:0 8px 8px 0;font-size:clamp(14px,1.15vw,17px);line-height:1.7;color:var(--ok)}
+.cue.think[open] summary{color:var(--slate);border-color:var(--slate);background:var(--slate-tint)}
+.cue.think .cue-body{background:var(--slate-tint);border-left-color:var(--slate);color:var(--slate-dark)}
+.cue.guess[open] summary{color:var(--warn);border-color:var(--warn);background:#F3E6CC}
+.cue.guess .cue-body{background:#F3E6CC;border-left-color:var(--warn);color:var(--warn)}
+#cueBtn[aria-pressed="true"]{background:var(--ok);color:#fff;border-color:var(--ok)}
+.prompt-compare{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:16px;margin-top:16px;max-width:64em}
+.prompt-card{background:#FAF7EF;border:1px solid var(--cream-line);border-radius:12px;padding:16px 18px}
+.prompt-card.plain{border-top:3px solid var(--ink-faint)}
+.prompt-card.upgrade,.prompt-card.good{border-top:3px solid var(--ok)}
+.prompt-card .lbl{font-size:12px;font-weight:800;letter-spacing:.16em;color:var(--ink-faint);margin-bottom:8px}
+.prompt-card .prompt{font-size:clamp(14px,1.2vw,18px);line-height:1.65;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.step-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:16px;max-width:64em}
+.step-strip .st{background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45}
+.step-strip .st b{display:block;font-size:11px;letter-spacing:.12em;color:var(--slate);margin-bottom:4px}
+.seven-banner{margin-top:10px;max-width:64em;background:#FAF7EF;border:1px solid var(--cream-line);border-radius:12px;padding:8px 12px}
+.seven-banner img{display:block;width:100%;height:auto;max-height:14vh;object-fit:contain}
+.seven{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:12px;max-width:64em}
+.seven .blk{background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:10px 8px;text-align:center}
+.seven .blk .n{font-weight:800;font-size:16px;color:var(--slate)}
+.seven .blk .t{font-size:12px;line-height:1.35;margin-top:4px;font-weight:700}
+.seven .blk .d{font-size:11px;line-height:1.4;color:var(--ink-muted);margin-top:4px;font-weight:400}
+.seven .blk.now{border-color:var(--accent);background:var(--accent-soft)}
+.seven .blk.now .n{color:var(--accent)}
+.observe-bar{margin-top:12px;max-width:64em;background:var(--slate-tint);border-left:4px solid var(--slate);border-radius:0 10px 10px 0;padding:10px 14px;font-size:clamp(14px,1.15vw,17px);line-height:1.6;color:var(--slate-dark)}
+.demo-pills{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.demo-pills span{font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px;border:1px solid var(--cream-line);color:var(--ink-muted);background:#FAF7EF}
+.demo-pills span.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.path-pills{display:flex;gap:6px;margin:4px 0 8px;flex-wrap:wrap}
+.path-pills span{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--cream-line);color:var(--ink-muted)}
+.path-pills span.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.kpi-row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.kpi-row .kpi-card{background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:10px 16px;min-width:120px}
+.kpi-row .kpi-card .num{font-size:28px;font-weight:800;color:var(--slate);font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi-row .kpi-card .lbl{font-size:12px;letter-spacing:.06em;color:var(--ink-faint);margin-top:4px}
+.news-hits{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-width:64em}
+.news-hit{display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:12px;align-items:center;background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:7px 12px}
+.news-hit .typ{font-size:12px;font-weight:800;letter-spacing:.06em;text-align:center;padding:4px 8px;border-radius:999px}
+.typ-活動{background:#F3E6CC;color:var(--warn)}
+.typ-通報{background:#F6E3DF;color:var(--bad)}
+.typ-指引{background:#E0EDE5;color:var(--ok)}
+.typ-儀式{background:var(--slate-tint);color:var(--slate-dark)}
+.typ-一句{background:var(--cream-soft);color:var(--ink-muted)}
+.news-hit .ttl{font-size:clamp(13px,1.05vw,16px);font-weight:700;line-height:1.4}
+.news-hit .when{font-size:12px;color:var(--ink-faint);white-space:nowrap;font-family:var(--mono)}
+.qr-wrap{position:absolute;right:40px;top:50%;transform:translateY(-50%);width:min(280px,24vw);text-align:center;z-index:1}
+.qr-wrap img{width:100%;background:#fff;border:1px solid var(--cream-line);border-radius:12px;padding:14px;box-shadow:0 10px 28px rgba(27,31,36,.12)}
+.qr-wrap .cap{margin-top:8px;font-size:12px;letter-spacing:.08em;color:var(--ink-faint);line-height:1.5}
+.slide:has(.qr-wrap){padding-right:calc(min(280px,24vw) + 64px)}
+.warmup-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.9fr);gap:16px;margin-top:12px;align-items:stretch;max-width:64em}
+.warmup-grid .example-block{max-height:58vh;margin-top:0;overflow:auto}
+.checks{display:flex;flex-direction:column;gap:8px}
+.checks .ck{background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:12px 14px}
+.checks .ck .n{font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--accent)}
+.checks .ck .t{font-weight:800;margin-top:2px}
+.checks .ck p{color:var(--ink-muted);font-size:14px;line-height:1.55;margin-top:4px}
+.review-seven{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px;max-width:64em}
+.review-seven .blk{background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:12px}
+.review-seven .blk:nth-child(n+5){grid-column:span 1}
+.review-seven .n{font-weight:800;color:var(--accent);font-size:12px;letter-spacing:.1em}
+.review-seven .t{font-weight:800;font-size:15px;margin:4px 0 6px;line-height:1.35}
+.review-seven .d{font-size:13px;line-height:1.5;color:var(--ink-muted)}
+.type-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.type-legend span{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
+.search-state{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.search-state > div{background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:8px 14px;min-width:132px}
+.search-state .k{display:block;font-size:11px;letter-spacing:.12em;font-weight:800;color:var(--ink-faint)}
+.search-state .v{display:block;font-weight:800;margin-top:2px;font-size:15px}
+.search-state .v.empty{color:var(--ink-faint);font-weight:600}
+.type-defs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px;max-width:64em}
+.type-defs .td{background:#FAF7EF;border:1px solid var(--cream-line);border-radius:10px;padding:8px 8px 10px;text-align:center}
+.type-defs .td .nm{font-size:13px;font-weight:800;margin-bottom:4px}
+.type-defs .td p{font-size:12px;line-height:1.4;color:var(--ink-muted)}
+.news-hit.now{border-color:var(--accent);background:#FAF3EE}
+.formula-line{margin-top:14px;background:var(--slate-dark);color:var(--cream);border-radius:10px;padding:12px 18px;font-weight:800;font-size:clamp(16px,1.4vw,22px);max-width:56em;letter-spacing:.02em}
+.take-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;max-width:60em}
+.vs-row{display:grid;grid-template-columns:1fr 1.15fr;gap:14px;margin-top:12px;max-width:64em;align-items:stretch}
+.vs-row .side{background:#FAF7EF;border:1px solid var(--cream-line);border-radius:12px;padding:14px 16px}
+.vs-row .side.miss{border-top:3px solid var(--bad)}
+.vs-row .side.hit{border-top:3px solid var(--ok)}
+.caption-q{margin-top:8px;font-size:13px;color:var(--ink-muted)}
+@media (max-width:760px){
+  .type-defs,.take-2,.vs-row{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .compare-2,.prompt-compare,.warmup-grid,.seven,.step-strip,.review-seven,.news-hit{grid-template-columns:1fr}
+  .assertion{font-size:clamp(22px,5.5vw,32px)}
+  .slide.active{padding:60px 20px 70px}
+  .slide-meta{left:20px;right:20px}
+  .timer-chip{right:20px}
+  .slide:has(.figure),.slide:has(.figures),.slide:has(.qr-wrap){padding-right:20px;overflow-y:auto}
+  .slide:has(.figure) .timer-chip,.slide:has(.figures) .timer-chip{right:20px}
+  .figure,.figures,.qr-wrap{position:relative;right:auto;top:auto;transform:none;width:min(420px,100%);margin:14px 0 0}
+  .figures .figure img,.figure img{max-height:40vh}
+}
+@media print{
+  body{overflow:visible;background:#fff;height:auto}
+  .slide{display:flex !important;page-break-after:always;height:auto;min-height:100vh;overflow:visible}
+  .progress-rail,.nav-controls,.slide-num,.cue{display:none}
+  .figure,.figures{position:relative;right:auto;top:auto;transform:none;width:min(340px,40%);margin:12px 0 0 auto}
+  .slide:has(.figure),.slide:has(.figures){padding-right:60px}
+}
+
+
+/* ai-info-organize: review-document projection layer */
+.slide.active{gap:0}
+.slide.dense .assertion{font-size:clamp(22px,2.35vw,40px)}
+.slide.dense .lead,.slide.dense .body-p,.slide.dense ul.plain li,.slide.dense ol.plain li{font-size:clamp(14px,1.08vw,17px);line-height:1.55}
+.slide.dense table.data td{font-size:clamp(12px,.95vw,15px);padding:7px 8px}
+.slide.compact .assertion{font-size:clamp(20px,2vw,34px)}
+.slide.compact .lead,.slide.compact .body-p,.slide.compact ul.plain li,.slide.compact ol.plain li{font-size:clamp(13px,.92vw,15px);line-height:1.45;margin-top:7px}
+.slide.compact table.data th,.slide.compact table.data td{font-size:clamp(11px,.82vw,13px);padding:5px 6px}
+.slide.compact .cue{margin-top:7px}
+.slide.compact .slide-header{margin-bottom:10px}
+.content-stack{display:flex;flex-direction:column;align-items:stretch;max-width:64em}
+.content-stack > :first-child{margin-top:14px}
+.content-stack .lead + .lead{margin-top:9px}
+.content-stack .tip-box,.content-stack .warning-box,.content-stack .task-frame,.content-stack .formula-line{max-width:64em}
+.quote-block{margin-top:14px;background:#FAF7EF;border-left:4px solid var(--slate);padding:13px 18px;border-radius:0 10px 10px 0;max-width:62em;color:var(--slate-dark);font-size:clamp(14px,1.15vw,17px);line-height:1.65}
+.activity-link{display:inline-flex;margin-top:14px;padding:8px 14px;border:1px solid var(--slate);border-radius:999px;color:var(--slate-dark);text-decoration:none;font-weight:800;font-size:14px;background:var(--slate-tint)}
+.chapter-index{display:inline-flex;align-items:center;justify-content:center;width:54px;height:54px;border:1px solid rgba(242,238,229,.35);border-radius:50%;font-family:var(--mono);font-size:17px;color:var(--cream);margin-bottom:22px}
+.summary-card{margin-top:18px;border:2px solid var(--accent);border-radius:12px;background:#FAF7EF;padding:20px 24px;max-width:62em}
+.summary-card ul{list-style:none}
+.summary-card li{position:relative;padding:8px 0 8px 25px;border-bottom:1px dashed var(--cream-line);font-size:clamp(15px,1.25vw,19px);line-height:1.55}
+.summary-card li:last-child{border-bottom:0}
+.summary-card li::before{content:"—";position:absolute;left:0;color:var(--accent);font-weight:900}
+.quiz-box{max-width:64em;padding:18px 22px}
+.quiz-box .opt{padding:10px 15px;margin-top:8px;font-size:clamp(16px,1.15vw,22px)}
+.quiz-feedback{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;max-width:64em}
+.quiz-feedback .quiz-hint,.quiz-feedback .quiz-explain{margin-top:0}
+.source-note{margin-top:10px;font-size:12px;color:var(--ink-faint);letter-spacing:.04em}
+.slide:has(.figure) .content-stack,.slide:has(.figures) .content-stack{max-width:42em}
+.slide:has(.figure) table.data,.slide:has(.figures) table.data{font-size:12px}
+.slide.title-slide .slide-meta{left:clamp(28px,6vw,110px);right:clamp(28px,6vw,110px)}
+.slide.title-slide.cover{justify-content:flex-end;align-items:flex-start;text-align:left;padding-bottom:12vh}
+.slide.title-slide.cover .title{max-width:14em;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.slide.title-slide.cover .subtitle{max-width:36em;color:var(--ink)}
+.slide.title-slide.cover .meta-line{color:var(--ink-muted)}
+.slide.title-slide.cover .cover-art{background-position:72% center;opacity:.42}
+.slide.title-slide.cover .cover-scrim{background:linear-gradient(90deg,rgba(242,238,229,.97) 0%,rgba(242,238,229,.88) 48%,rgba(242,238,229,.24) 100%)}
+.slide.dark .opener-tag .lead,.slide.dark .opener-tag .body-p{color:rgba(242,238,229,.82)}
+.slide.dark .opener-tag strong{color:var(--cream)}
+.nav-controls button:focus-visible,.opt:focus-visible,.cue summary:focus-visible,.activity-link:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.slide.active{animation:none}}
+@media (max-width:760px){
+  body{height:auto;min-height:100vh;overflow:auto}
+  .slide.active{height:auto;min-height:100vh;overflow:visible}
+  .quiz-feedback{grid-template-columns:1fr}
+}
+
+</style>
+</head>
+<body>
+<!-- 本檔由 投影片全文（審查版）.md 主課 1–163 頁機器生成：build-slides_學生版.mjs。
+     樣式、導覽列、執行期腳本逐位元組取自本檔上一版；手改會被下一次生成覆蓋——改審查版。 -->
+<div class="progress-rail" id="progressRail"></div>
+<!-- 001/163 · COVER -->
+<section class="slide title-slide cover" data-source-page="1">
+  <div class="cover-art" style="background-image:url('img/cover-organize.webp')"></div>
+  <div class="cover-scrim"></div>
+  <span class="ch-pill">AI 輔助資料搜尋及整理</span>
+  <h1 class="title">AI輔助資料搜尋及整理（下）：整理篇</h1>
+  <p class="subtitle">對象：18 歲以上對科技有興趣之公眾</p>
+  <p class="meta-line">成人公眾課程 · 640 分鐘 · 提示詞 → 通道 → 提取 → 呈現 → 閉環</p>
+  <div class="slide-meta"><span>整理篇</span><span class="num"></span></div>
+</section>
+
+<!-- 002/163 · 學習地圖 -->
+<section class="slide dense" data-source-page="2">
+  <figure class="figure"><img src="img/organize-map-six.webp" alt="六站路線：問句→鎖→筆記本→表格→稜鏡→閉環"></figure>
+  <div class="slide-header"><span class="eyebrow">學習地圖</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">「四句」在本課有四組，不要混：</h2>
+  <div class="content-stack"><table class="data compact"><thead><tr><th scope="col">階段</th><th scope="col">時間</th><th scope="col">第幾晚</th><th scope="col">你會學到</th></tr></thead><tbody><tr><td>提示詞篇：元素與優化</td><td>40 分鐘</td><td>晚 1</td><td>能把「幫我整理」改成角色／任務／限制／格式</td></tr><tr><td>Proton VPN（Chrome 外掛）</td><td>30 分鐘</td><td>晚 1</td><td>能說明外掛保護的是這個瀏覽器的通道，不是 Google 裡的副本</td></tr><tr><td>暖身／示範／實戰／成果（現課）</td><td>240 分鐘</td><td>晚 1–2</td><td>提取表＋歸納＋出處（正文與四小時審查版相同）</td></tr><tr><td>提問即整理</td><td>120 分鐘</td><td>晚 3</td><td>對照表至少一格「來源未載」；FAQ；缺口寫文獻類型</td></tr><tr><td>呈現</td><td>120 分鐘</td><td>晚 4</td><td>先寫四句大綱，只選一種 Studio 輸出，書面仍是主張＋引用</td></tr><tr><td>閉環與四句口頭</td><td>90 分鐘</td><td>晚 5</td><td>收了什麼／丟掉什麼／有引用的發現／不敢結論的缺口</td></tr></tbody></table>
+<p class="lead"><strong>這 640 分鐘分五晚上完</strong>，每一章都在自己的晚上收尾，不會切在半路。</p>
+<table class="data"><thead><tr><th scope="col">哪一個四句</th><th scope="col">在哪一頁</th><th scope="col">拿來做什麼</th></tr></thead><tbody><tr><td>ICIO 四格</td><td>頁 13</td><td>寫給聊天 AI 的提示詞骨架</td></tr><tr><td>焦點欄四句</td><td>頁 135</td><td>按下 Studio 生成之前填的那四句</td></tr><tr><td>大綱四句</td><td>頁 138–139</td><td>主張／證據／證據／限制</td></tr><tr><td>口頭四句</td><td>頁 151</td><td>收了什麼／丟了什麼／有引用的發現／不敢結論</td></tr></tbody></table></div>
+  
+  <div class="slide-meta"><span>學習地圖</span><span class="num"></span></div>
+</section>
+
+<!-- 003/163 · CHAPTER -->
+<section class="slide dark title-slide" data-source-page="3">
+  <div class="cover-art" style="background-image:url('img/organize-open-prompt.webp')"></div>
+  <span class="chapter-index">01</span>
+  <h1 class="title">提示詞篇：元素與優化</h1>
+  <div class="opener-tag"><p class="lead">（本章 40 分鐘）</p>
+<p class="body-p">先不要打開 NotebookLM，也不要打開 VPN。</p>
+<p class="body-p"><strong>已經會寫提示詞的人</strong>：這 40 分鐘請只盯一件事——<strong>它為什麼給你散文，不給你可以逐格檢查的表</strong>。</p></div>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 004/163 · 內容頁｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="4">
+  <figure class="figure"><img src="img/organize-prompt-foreword.webp" alt="前文決定後文：左＝亂線團的對話泡，中＝一格一格的詞塊鏈，右＝輸出泡"></figure>
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">你打出去的字，就是模型的前文</h2>
+  <div class="content-stack"><p class="lead">大語言模型根據前文，一次預測一個最可能的下一個詞。它不是理解之後再思考。</p>
+<p class="body-p">今天會把上堂的可讀資料堆餵進閱讀工具。餵之前先練上堂沒當主線的事：<strong>你怎麼問。</strong> 前文糊，後面每個詞都在猜一個「聽起來像整理」的世界。</p>
+<div class="formula-line">板書：前文決定後文。</div>
+<p class="body-p"><strong>老師現場示範（學員只看，不要動手）</strong>：老師在自己的筆記本打一句「幫我整理這些運動資料」，把吐出來那段通順摘要投影出來。看兩件事——它給的是<strong>散文不是表</strong>；而且<strong>每一句都指不出是哪一份檔</strong>講的。你們這四十分鐘不碰產品，先把問句練好。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">鄰座互說一句「我打出去的字＝它的前文」。</div></details>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 005/163 · 內容頁｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="5">
+  
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">兩個填空：高機率不是觀察</h2>
+  <div class="content-stack"><ol class="plain"><li>天空是________</li><li>英文字母有________個</li></ol>
+<p class="lead">第一題補「藍色」，是語料裡的高機率，不是它剛才看了窗外。第二題 26 是穩定事實；換成來源裡的冷門數字——每週分鐘數、年齡——它就可能編。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">請一人回答：整理運動資料時，哪種數字比較像「英文字母有幾個」、哪種比較像「天空的顏色」？標準：來源寫明的分鐘數像字母；「運動一定有益」像天空。</div></details>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 006/163 · 內容頁｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="6">
+  <figure class="figure"><img src="img/organize-prompt-context.webp" alt="上下文＝電影跳到第 50 分鐘：膠捲從中段接起，缺了開頭就看不懂角色為什麼哭"></figure>
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">上下文＝電影跳到第 50 分鐘</h2>
+  <div class="content-stack"><p class="lead">上下文是讓 AI 明白「這句話在什麼情況下說」。跳到電影第 50 分鐘，你看不懂角色為什麼哭。</p>
+<p class="body-p">辦公場合的上下文＝給誰看、哪個地方、期限、既有格式。沒有上下文，它會自己編一個看起來像機關的世界。</p>
+<p class="body-p">今天已經有的上下文：想開始規律運動的中年人；上堂那堆來源；港澳。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">請一人說出今天的「誰／哪裡／哪堆材料」。</div></details>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 007/163 · 內容頁｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="7">
+  <figure class="figure"><img src="img/organize-prompt-roadmap.webp" alt="什麼進什麼出：同一張空白便條，一條岔路通向裝滿廢紙的垃圾桶，另一條通向整齊的空表"></figure>
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">提示詞是路線圖，不是咒語</h2>
+  <div class="content-stack"><p class="lead">提示詞＝你給生成式 AI 的初始訊息。短可以是一句，長可以是規格書。</p>
+<p class="body-p">它告訴模型：任務目標、限制、輸出格式。原則：<strong>什麼進，什麼出。</strong> 垃圾進、垃圾出。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">用自己的話跟鄰座說「提示詞管的是什麼」——不准只說「問問題」。</div></details>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 008/163 · 內容頁｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="8">
+  <figure class="figure"><img src="img/organize-prompt-fuzzy.webp" alt="模糊進、摘要出：左＝揉皺的紙團，右＝分成四格的空白表（角色／讀者／要做與不要做／格式）"></figure>
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">模糊進，摘要出</h2>
+  <div class="content-stack"><ul class="plain scan"><li>模糊：「幫我整理這些運動資料。」</li><li>優質：「你是公共衛生護士。讀者是 45 歲、想開始運動、沒有私人教練的人。只根據我稍後上傳的來源，用表格比較每週分鐘數／強度／注意事項。來源沒寫就填『來源未載』，不要用常識補。不要寫成健身室廣告。用繁體中文。」</li></ul>
+<p class="lead">優質那條多了四樣：角色、讀者、要做與不要做、格式。</p>
+<p class="body-p">打開活動頁 <code>#prompt</code>，先把模糊那句抄進去。<strong>這一頁還不准改。</strong></p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">模糊句已抄進活動頁的舉手。</div></details>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 009/163 · 測驗｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="9">
+  
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">哪一句比較像優質提示？</h2>
+  <div class="content-stack"><div class="quiz-box" data-quiz-id="review-9"><p class="quiz-q">「幫我整理這些運動資料」缺的主要是什麼？</p><button class="opt" type="button">A. 比較強的模型名稱</button><button class="opt" type="button" data-correct>B. 角色、讀者、不要做的事、輸出格式</button><button class="opt" type="button">C. 更多形容詞，例如「詳細、專業、完整」</button><button class="opt" type="button">D. 先打開 VPN</button><div class="quiz-feedback"><div class="quiz-hint" hidden><strong>提示：</strong>模型名稱與形容詞都不能當規格。</div><div class="quiz-explain" hidden><strong>答案：</strong>優質提示先寫清角色與格式；VPN 管通道，不管提示詞品質。</div></div></div></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">選完再翻；講 B 為什麼贏 C。</div></details>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 010/163 · 內容頁｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="10">
+  <figure class="figure"><img src="img/organize-prompt-elements.webp" alt="提示詞六元素一列排開：面具＝角色、打勾清單＝指令、風景框＝背景、格線＝格式、兩張卡＝範例、循環箭頭＝迭代"></figure>
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">常見的提示詞元素與技巧</h2>
+  <div class="content-stack"><p class="lead">課堂要你帶走的六項（辦公課 p.13）。前四項本堂必填；後兩項加分。</p>
+<ol class="plain"><li>角色設定 — 語氣從這裡來</li><li>清晰指令 — 要做什麼、不要做什麼</li><li>背景資訊 — 不要假設它知道你的專案</li><li>結構化格式 — 表、清單、FAQ</li><li>範例（Few-shot） — 給它看一列理想輸出</li><li>迭代優化 — 第一稿是草稿，改用詞，不是只換模型</li></ol>
+<p class="body-p">本堂固定不要：補洞、當處方、賣課口吻。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">用手指數前四項。數不出來的，看著表再數一次。</div></details>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 011/163 · 內容頁｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="11">
+  
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">把模糊句補成四格</h2>
+  <div class="content-stack"><p class="lead">活動頁 <code>#prompt</code> 前四格，用<strong>你自己的可讀堆主題</strong>（沒帶堆的用「中年人規律運動」）：</p>
+<table class="data"><thead><tr><th scope="col">格</th><th scope="col">你現在填</th></tr></thead><tbody><tr><td>角色</td><td>例如公共衛生護士／中學體育老師</td></tr><tr><td>任務（要做）</td><td>例如對照表，不要摘要</td></tr><tr><td>不要做</td><td>補洞、當處方、廣告口吻</td></tr><tr><td>格式</td><td>表／FAQ／條列；空格寫來源未載；繁中</td></tr></tbody></table>
+<p class="body-p">倒數 6 分鐘。前四格沒滿的，巡堂停在這一頁。</p>
+<p class="body-p">卡關：角色寫「AI」——還差一步，改成一個有讀者的人（護士、體育老師、45 歲朋友）。任務只寫「整理」——還差一步，改成表或 FAQ。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">前四格都有字的舉手。提早完成的人加寫「理想的一列提取表」當 Few-shot。</div></details>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 012/163 · 內容頁｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="12">
+  
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">如何優化提示詞？框架是清單，不是咒語</h2>
+  <div class="content-stack"><p class="lead">優化不是背十套英文縮寫。缺受眾或輸出格式才是問題。</p>
+<p class="body-p">菜單（認識即可）：CO-STAR、ICIO、CRISPE、BROKE、RASCEF、BORE、APE、TRACE、ROSES、CLEVER。</p>
+<p class="body-p">今天只深挖兩個：</p>
+<ul class="plain scan"><li><strong>CO-STAR</strong>：對外文案／電郵（本堂少用）</li><li><strong>ICIO</strong>：處理既有材料（本堂主力）</li></ul></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">跟鄰座說「我今天主力用哪一套、為什麼」。標準：ICIO，因為材料已經在可讀堆裡。</div></details>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 013/163 · 內容頁｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="13">
+  <figure class="figure"><img src="img/organize-prompt-icio.webp" alt="ICIO 四格依序相接：任務、背景、輸入、輸出"></figure>
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">ICIO：任務／背景／輸入／輸出</h2>
+  <div class="content-stack"><table class="data"><thead><tr><th scope="col">格</th><th scope="col">今天填什麼</th></tr></thead><tbody><tr><td>I 任務 Instruction</td><td>做對照表，不要摘要</td></tr><tr><td>C 背景 Context</td><td>45 歲開始運動；來源有官方也有開箱</td></tr><tr><td>I 輸入 Input</td><td>只根據勾選的這幾檔</td></tr><tr><td>O 輸出 Output</td><td>四欄表；空格寫來源未載；繁中</td></tr></tbody></table>
+<p class="lead">CO-STAR 30 秒反例：「幫我寫 Facebook 叫人來運動」——缺受眾年齡、缺「不要恐嚇」。</p>
+<p class="body-p">活動頁下半：ICIO 四格用自己的堆填完。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">抽一人讀他的 O。沒有「來源未載」或「表格」的，全班補。</div></details>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 014/163 · 內容頁｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="14">
+  
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">過關：同一條，兩種寫法</h2>
+  <div class="content-stack"><p class="lead">舉手（可重疊）：</p>
+<ol class="plain"><li>我的優質版看得到角色、不要做、格式</li><li>我能用一句話說為什麼提示詞要寫受眾</li></ol>
+<p class="body-p">金句：等下進 Notebook，禁止只打「幫我整理」。ICIO 的 O 沒寫，它就還你一段摘要。</p>
+<p class="body-p">還沒寫完的，現在補。寫完的不要打開 VPN 商店——等下一章一起。</p>
+<p class="body-p">回收六元素（口頭，不投影新表）：角色、指令、背景、格式——這四格等下進 Notebook 每一問都要在。範例與迭代是加分。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">兩組加起來必須是全班。缺的人現在補。抽一人用 15 秒讀他的優質版；全班聽有沒有「不要做」和「格式」。</div></details>
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 015/163 · 本章重點｜提示詞篇：元素與優化 -->
+<section class="slide" data-source-page="15">
+  
+  <div class="slide-header"><span class="eyebrow">提示詞篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">本章重點：提示詞篇</h2>
+  <div class="content-stack"><div class="summary-card"><ul><li>你的問題＝模型的前文</li><li>六元素：角色、指令、背景、格式、範例、迭代；前四項必填</li><li>優化用檢查清單；本堂主力 ICIO</li><li>禁止「幫我整理」當唯一一句</li></ul></div></div>
+  
+  <div class="slide-meta"><span>提示詞篇</span><span class="num"></span></div>
+</section>
+
+<!-- 016/163 · CHAPTER -->
+<section class="slide dark title-slide" data-source-page="16">
+  <div class="cover-art" style="background-image:url('img/organize-open-vpn.webp')"></div>
+  <span class="chapter-index">02</span>
+  <h1 class="title">Proton VPN：先保護這個 Chrome 的通道</h1>
+  <div class="opener-tag"><p class="lead">（本章 30 分鐘）</p>
+<p class="body-p">仍先不要打開 NotebookLM。</p></div>
+  <div class="slide-meta"><span>VPN 篇</span><span class="num"></span></div>
+</section>
+
+<!-- 017/163 · 內容頁｜Proton VPN Chrome 外掛 -->
+<section class="slide" data-source-page="17">
+  
+  <div class="slide-header"><span class="eyebrow">VPN 篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">上堂管內容，這 30 分鐘管通道</h2>
+  <div class="content-stack"><p class="lead">上堂隱私紅線：身分證、病歷、密碼不要貼進任何 AI。那條管的是<strong>內容</strong>。</p>
+<p class="body-p">今天要在瀏覽器把可讀堆傳到 Google。場地 Wi‑Fi 看不看得到你正在傳檔，是另一件事。我們裝的是 Proton VPN 的 <strong>Chrome 外掛</strong>，不是桌面安裝檔。</p>
+<p class="body-p">外掛只保護這個瀏覽器。Whatsapp、檔案總管、其他 App 不受它保護。它也不能讓 Google 看不見你上傳的檔。不願放進雲端硬碟的東西，今天仍然不要放進筆記本。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">鄰座互說兩句——「外掛保護這個 Chrome」；「Google 一樣看得到檔」。</div></details>
+  <div class="slide-meta"><span>VPN 篇</span><span class="num"></span></div>
+</section>
+
+<!-- 018/163 · 內容頁｜Proton VPN Chrome 外掛 -->
+<section class="slide" data-source-page="18">
+  <figure class="figure"><img src="img/organize-vpn-channel.webp" alt="通道 vs 副本：左＝場地 Wi-Fi 看得到你在傳檔；右＝檔案進了上鎖的通道，但雲端那份副本一樣還在"></figure>
+  <div class="slide-header"><span class="eyebrow">VPN 篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">四格：通道 vs 副本</h2>
+  <div class="content-stack"><table class="data"><thead><tr><th scope="col"></th><th scope="col">外掛沒開</th><th scope="col">外掛已連線</th></tr></thead><tbody><tr><td>場地 Wi‑Fi 對這個 Chrome</td><td>看得到你連 notebook.google.com、傳了檔</td><td>看得到你連 Proton；檔內容不是明文</td></tr><tr><td>Google 帳號</td><td>看得到上傳的來源</td><td><strong>一樣看得到</strong></td></tr></tbody></table>
+<p class="lead">等下開 NotebookLM 必須用<strong>同一個已連線的 Chrome</strong>。不要換無痕、不要換另一個瀏覽器、不要用手機 App。無痕模式預設不跑外掛。</p>
+<p class="body-p">系統應用程式保護整部電腦；本堂不評分。免費層伺服器較少，課堂連上即可。</p>
+<p class="body-p">活動頁 <code>#vpn</code> 上半四格用自己的話寫完，必須出現「只保護這個瀏覽器」。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">四格有字才准打開商店。</div></details>
+  <div class="slide-meta"><span>VPN 篇</span><span class="num"></span></div>
+</section>
+
+<!-- 019/163 · 內容頁｜Proton VPN Chrome 外掛 -->
+<section class="slide dense" data-source-page="19">
+  
+  <div class="slide-header"><span class="eyebrow">VPN 篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">只走官方商店</h2>
+  <div class="content-stack"><p class="lead">兩個入口，擇一：</p>
+<ol class="plain"><li><a href="https://protonvpn.com/download-chrome-extension" target="_blank" rel="noopener">https://protonvpn.com/download-chrome-extension</a></li><li>Chrome 線上應用程式商店搜尋 <strong>Proton VPN</strong>，發行者必須是 <strong>Proton AG</strong></li></ol>
+<p class="body-p">只准商店裡、發行者寫 Proton AG 的那一個。仿冒外掛今天當淘汰來源。不要側載、不要 crx 檔。</p>
+<p class="body-p">Edge 第一次開 Chrome 商店：按「允許來自其他商店的延伸功能」。沒有 Chrome／Chromium 的人（只帶 Safari／手機）：這一頁起全部走備案，不改教 iOS App。</p>
+<p class="body-p">課堂不收你的密碼。沒帳的現在註冊；老師不等每人都有帳。</p>
+<p class="body-p">仿冒長這樣：商店名稱像、發行者不是 Proton AG、要你下載 crx。今天當淘汰來源，與上堂丟無作者懶人包同一條肌肉。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">看得到發行者 Proton AG 的舉手；看不到的改備案。</div></details>
+  <div class="slide-meta"><span>VPN 篇</span><span class="num"></span></div>
+</section>
+
+<!-- 020/163 · 內容頁｜Proton VPN Chrome 外掛 -->
+<section class="slide" data-source-page="20">
+  <figure class="figure"><img src="img/organize-vpn-chrome.webp" alt="外掛釘在工具列上的樣子：同一個 Chrome 視窗、工具列上一塊拼圖"></figure>
+  <div class="slide-header"><span class="eyebrow">VPN 篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">老師投影 7 步</h2>
+  <div class="content-stack"><p class="lead">每步報號、停 5 秒。</p>
+<ol class="plain"><li>打開 Chrome（不是無痕）</li><li>進入官方外掛頁或商店頁，確認發行者 Proton AG</li><li>Add to Chrome → Add extension</li><li>工具列拼圖 → 釘選 Proton VPN</li><li>點圖示，用 Proton 帳登入</li><li>Quick Connect，等到 Connected／已連線</li><li><strong>不要關這個 Chrome。</strong> NotebookLM 只准這個視窗</li></ol>
+<p class="body-p">Firefox 另有官方外掛，非主線。Windows／Mac 桌面應用回家選修，本堂不裝 EXE。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">老師工具列顯示已連線。學員看得到。未連上的不要假裝，轉備案。</div></details>
+  <div class="slide-meta"><span>VPN 篇</span><span class="num"></span></div>
+</section>
+
+<!-- 021/163 · 內容頁｜Proton VPN Chrome 外掛 -->
+<section class="slide" data-source-page="21">
+  
+  <div class="slide-header"><span class="eyebrow">VPN 篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">跟做 7 分鐘，或備案四題</h2>
+  <div class="content-stack"><ul class="plain scan"><li>已連線：幫鄰座；幫完在 <code>#vpn</code> 寫「已連線／哪個國家／我釘選了」</li><li>安裝中：不要重複按 Add to Chrome 兩次</li><li>學校 Chrome 被管理、商店被擋、沒有 Chromium：立刻改備案</li><li>千人場：兩人一組，卡住超過 2 分鐘舉手</li></ul>
+<p class="lead">備案四題（老師投影預截的商店頁）：</p>
+<ol class="plain"><li>圈出 Add to Chrome；發行者應看到哪幾個字？</li><li>為什麼要釘選？不釘選等下會犯什麼錯？</li><li>外掛已連線後，用<strong>另一個瀏覽器</strong>開 NotebookLM，通道還受保護嗎？標準答案：<strong>不受保護。</strong></li><li>我願／不願把今天這份可讀堆放進 Google。不願＝今天改用老師投影的本，自己只填提取表，不上傳。</li></ol></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">倒數結束時，已連線或備案四題有字。</div></details>
+  <div class="slide-meta"><span>VPN 篇</span><span class="num"></span></div>
+</section>
+
+<!-- 022/163 · 內容頁｜Proton VPN Chrome 外掛 -->
+<section class="slide" data-source-page="22">
+  
+  <div class="slide-header"><span class="eyebrow">VPN 篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">過關線；RAG 一句</h2>
+  <div class="content-stack"><p class="lead">舉手兩組（可重疊）：</p>
+<ol class="plain"><li>此外掛圖示顯示已連線，且我知道等下要用<strong>這個</strong> Chrome</li><li>四格表＋備案四題都有字</li></ol>
+<p class="body-p">金句：等下登入 NotebookLM，外掛保持連線。斷了就再按 Quick Connect。換瀏覽器等於沒開 VPN。</p>
+<p class="body-p">外掛保護的是通道。Notebook 讀的是你上傳的副本——生成前先從你的檔取片段，不是把整本人生貼進通用聊天。通道加密，Google 一樣看得到檔。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">兩組加起來必須是全班。缺的人現在補，不進入現課暖身。</div></details>
+  <div class="slide-meta"><span>VPN 篇</span><span class="num"></span></div>
+</section>
+
+<!-- 023/163 · 測驗｜Proton VPN Chrome 外掛 -->
+<section class="slide" data-source-page="23">
+  
+  <div class="slide-header"><span class="eyebrow">VPN 篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">外掛連上之後，Google 還看不看得到你上傳的檔？</h2>
+  <div class="content-stack"><div class="quiz-box" data-quiz-id="review-23"><p class="quiz-q">正解：B。Hint：加密的是這個瀏覽器到 Google 的路，不是 Google 裡的檔。Explain：換無痕預設不跑外掛，更不受保護。</p><button class="opt" type="button">A. 看不到，因為已經加密</button><button class="opt" type="button" data-correct>B. 看得到；外掛保護的是這個瀏覽器到 Google 的通道，不是雲端裡的副本</button><button class="opt" type="button">C. 只有免費帳看得到</button><button class="opt" type="button">D. 換無痕視窗就看不到</button><div class="quiz-feedback"><div class="quiz-hint" hidden><strong>提示：</strong>加密的是這個瀏覽器到 Google 的路，不是 Google 裡的檔。</div><div class="quiz-explain" hidden><strong>答案：</strong>換無痕預設不跑外掛，更不受保護。</div></div></div></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">選完再翻。錯選 A 的，把四格表右下格再唸一次。</div></details>
+  <div class="slide-meta"><span>VPN 篇</span><span class="num"></span></div>
+</section>
+
+<!-- 024/163 · 本章重點｜Proton VPN Chrome 外掛 -->
+<section class="slide" data-source-page="24">
+  
+  <div class="slide-header"><span class="eyebrow">VPN 篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">本章重點：Proton VPN</h2>
+  <div class="content-stack"><div class="summary-card"><ul><li>外掛只保護這個 Chrome，不是整部電腦</li><li>通道 ≠ 副本</li><li>同一個已連線的 Chrome 再開 NotebookLM</li><li>被擋就備案，不算你輸</li></ul></div></div>
+  
+  <div class="slide-meta"><span>VPN 篇</span><span class="num"></span></div>
+</section>
+
+<!-- 025/163 · CHAPTER -->
+<section class="slide dark title-slide" data-source-page="25">
+  <div class="cover-art" style="background-image:url('img/organize-open-warmup.webp')"></div>
+  <span class="chapter-index">03</span>
+  <h1 class="title">暖身篇：回顧與 AI 是怎麼「讀」的</h1>
+  <div class="opener-tag"><p class="lead">（本章 40 分鐘）</p></div>
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 026/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="26">
+  <div class="figures"><figure class="figure"><img src="img/organize-today-three.webp" alt="今天三步：對表＝篩已做、提取＝主張證據出處、批判後歸納成筆記"></figure><figure class="figure"><img src="img/organize-read-four.webp" alt="讀的四步"></figure></div>
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">歡迎回來：今天把可讀資料堆變成<span class="focal">你自己的筆記</span></h2>
+  <div class="content-stack"><p class="lead"><strong>上過上堂的</strong>：你手上多了一份「可讀資料堆」——已查證、已分五型、已存文字。<strong>第一次來的</strong>：等一下頁 30 我用四分鐘把你補上，材料我這裡也有一份，你今天一樣做得完整套。</p>
+<p class="body-p">今天不是再搜，也不是把清單交給 AI 產一份摘要當作業；今天的主角是把已存的文字檔餵進去，填提取表，再經你批判後歸納成筆記。今天主產品是提取表，摘要只是草稿。</p>
+<p class="body-p">今天三步走：</p>
+<ol class="plain"><li>對表（篩已做）——拿出可讀資料堆，精讀／略讀／淘汰上堂已標</li><li>提取——餵文字檔，用提問做出主張–證據–出處，填進提取表</li><li>批判後歸納成筆記——對原文、跨來源（同意／打架／缺什麼）</li></ol>
+<p class="body-p">打開活動頁 QR，提取表與歸納可在活動頁填。</p></div>
+  
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 027/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="27">
+  
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">就位動作一：拿出可讀資料堆（紙或照片）＋文字檔</h2>
+  <div class="content-stack"><p class="lead">拿出可讀資料堆——紙本或照片都行——再把對應的文字檔打開。跟鄰座互相確認：兩個人手上都有表、都有文字。</p>
+<p class="body-p">沒帶的不要慌：等下向老師領範例資料包（6 檔），今天的實作照樣做得到。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">可讀資料堆和文字檔都在手上的人舉手；沒舉手的，老師現在就記下人數。</div></details>
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 028/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="28">
+  
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">就位動作二：登入 NotebookLM，兩人互助</h2>
+  <div class="content-stack"><p class="lead">今天把資料餵給誰讀？就是 NotebookLM——用 Google 帳號登入。</p>
+<ol class="plain"><li>已經登入的，幫旁邊還沒登入的</li><li>卡住超過兩分鐘的，直接舉手，老師過去</li><li>兩人一組互助，不用等老師逐個處理</li></ol></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">看到 NotebookLM 主畫面的舉手。</div></details>
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 029/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="29">
+  
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">就位動作三：確認內文還在——截圖不算數</h2>
+  <div class="content-stack"><p class="lead">等下要餵給 AI 的是「文字」，不是截圖。上堂存好的「文字」內文等一下要用；只剩截圖的，現在就補存文字。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">打開你存好的內文檔，唸得出第一句的，算過關。只剩截圖的，現在開始補存——這件事只能靠自己重搜，越早開始越好。</div></details>
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 030/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="30">
+  
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">補票速成：沒上過上堂的三個重點</h2>
+  <div class="content-stack"><p class="lead">沒上過上堂的學員，快速補上三個重點：</p>
+<ol class="plain"><li>AI 會幻覺——它會用自信的口吻說錯話，甚至編造不存在的來源</li><li>查證三步——來源是誰、時效對不對、立場為何；缺兩項就淘汰。官方新聞還要分五型（指引／活動／通報／儀式／一句帶過），指引才精讀</li><li>今天的原料是文字檔——可讀資料堆裡已存好的內文；不是截圖，也不是再跑一輪新聞搜尋</li></ol>
+<p class="body-p">有上過的人，這段跟著默唸一遍，當作喚回。</p>
+<p class="body-p"><strong>60 秒樣張</strong>：投影範例資料包第 3 檔（澳門衛生局「起來。鬆一鬆」）。這是官方新聞裡的指引型：約 15 分鐘、每日 2 次、對上世衛 150 分鐘——所以精讀。今天不當堂打開新聞搜尋當主線。</p></div>
+  
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 031/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="31">
+  
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">練習：拿一筆來源走一遍「查證三步」</h2>
+  <div class="content-stack"><p class="lead">老師拿範例資料包第 1 檔「世界衛生組織《全球建議》」做例子，全班一起問三個問題，口頭搶答：</p>
+<ol class="plain"><li>來源是誰？——世界衛生組織官方出版物，說話有資格</li><li>時效對不對？——2010 年發布、2020 有更新版；「每週 150 分鐘」這條基線現仍通用，引用註明年份即可</li><li>立場為何？——公共衛生機構，沒有想賣你什麼</li></ol>
+<p class="body-p">對照第 5 檔「健身會館開箱文」：來源是商家自家平台、年份不詳、文內賣課程賣產品——三問缺兩項，淘汰（或降級「僅供參考」）。</p>
+<p class="body-p"><strong>規則</strong>：三問缺了兩項答案，這筆來源就淘汰。</p>
+<p class="body-p">順帶預告：之後「修提問」會用到提問三式——給身分、給條件、要格式。先記下這句，實戰篇用得到。</p></div>
+  
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 032/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="32">
+  <figure class="figure"><img src="img/1789277956529.webp" alt="1789277956529"></figure>
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">沒帶資料？範例資料包照樣玩</h2>
+  <div class="content-stack"><p class="lead">手上沒有可讀資料堆的，現在就到Google Drive中領範例資料包——裡面有 6 份文字檔（世衛、衞生署、澳門衛生局、運動科學網、模擬開箱文、體育局嘉年華），檔名就是來源名稱，照樣能完成今天全部實作。</p>
+<p class="body-p"><a href="https://drive.google.com/drive/folders/1iEizn502KQRXDkFsmYSkAx1iCKw90jZs?usp=sharing" target="_blank" rel="noopener">drive.google.com/drive/folders/1iEizn502KQRXDkFsmYSkAx1iCKw90jZs?usp=sharing</a></p>
+<div class="tip-box"><span class="focal">提示</span><strong>今天沒帶資料也能玩</strong>：沒帶可讀資料堆的人，課堂會提供老師的範例資料包（6 檔），照樣能完成今天的實作。 <span class="focal">提示</span><strong>範例資料包：老師課前必備</strong>：範例資料包不會憑空出現：課前備好與上堂示範可讀堆同一套的 6 個文字檔、放進 Google Drive 共用資料夾，上課才發得出來。</div></div>
+  
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 033/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="33">
+  <figure class="figure"><img src="img/organize-only-your-docs.webp" alt="關鍵差別：左＝地球腦倒出沒出處的泛答；右＝你的文件餵進筆記本、結論氣泡帶來源標籤"></figure>
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">關鍵差別：它只根據「你給的資料」回答</h2>
+  <div class="content-stack"><p class="lead">今天用的 NotebookLM 跟一般對話 AI 有一個關鍵差別：它只根據「你丟給它的資料」回答。</p>
+<table class="data"><thead><tr><th scope="col">一般對話 AI</th><th scope="col">NotebookLM</th></tr></thead><tbody><tr><td>靠訓練時讀過的東西回答；問什麼答什麼，但來源追不到</td><td>只讀你給的幾份資料；每個結論都標得出處，追得到</td></tr></tbody></table>
+<p class="body-p">一個筆記本＝一組資料。你給它什麼，它才讀什麼。</p></div>
+  
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 034/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="34">
+  <figure class="figure"><img src="img/notebooklm-ui-overview.webp" alt="NotebookLM 介面截圖：左「來源」、中「對話」、右「工作室」三區"></figure>
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">NotebookLM 介面總覽：來源／對話／工作室三區</h2>
+  <div class="content-stack"><ol class="plain"><li>左「來源」——新增來源：貼文字、上傳檔案、拖放都行；存好的來源會列在這裡</li><li>中「對話」——提問或創作內容；答案每句話旁有編號來源標記</li><li>右「工作室」——一鍵產出：語音摘要、簡報、影片摘要、心智圖、報告、學習卡、測驗、資訊圖表、資料表</li></ol>
+<p class="lead">注意畫面最下面那行小字：「Gemini Notebook 提供的資訊未必正確，請查證回應內容。」——工具自己都叫你要查證。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">打開畫面，跟鄰座互相指認三個區。</div></details>
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 035/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="35">
+  
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">使用方式①：加來源</h2>
+  <div class="content-stack"><ol class="plain"><li>點「＋ 新增來源」——直接貼上文字，或上傳文字檔；上堂課存內文的做法，剛好就是它要的格式</li><li>加完之後，左欄列出來源名稱；提問框旁的「0 個來源」變成 N 個來源</li><li>介面以英文為主，但可直接用繁中提問、會以繁中回答</li></ol>
+<p class="lead"><strong>跟做動作</strong>：現在把第一筆來源加進你的筆記本；沒帶資料的，等示範篇看老師操作。</p></div>
+  
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 036/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="36">
+  
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">使用方式②：提問與看來源標記</h2>
+  <div class="content-stack"><ol class="plain"><li>下方提問框輸入問題，送出；讀答案時看句旁的數字編號</li><li>點編號——左側會打開該來源的原文段落；這就是「追得到」的介面</li><li>三個快捷選項（瞭解新主題／製作新內容／推動專案進度）只是入口；主線還是你自己提問</li></ol></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">問一個問題、點一個來源標記，看原文是不是真的這樣說。</div></details>
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 037/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="37">
+  <figure class="figure"><img src="img/organize-accelerator.webp" alt="閱讀加速器：你挑書餵進漏斗、漏斗加速吐出重點條、另一隻手托著天平＝判斷仍是你的"></figure>
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">正確姿勢：閱讀加速器，不是替你讀書</h2>
+  <div class="content-stack"><p class="lead">這正是「輔助閱讀」的正確姿勢：不是讓 AI 替你讀書，是讓 AI 幫你把你選好的書讀得更快、重點抓得更清楚。</p>
+<p class="body-p">例子：範例資料包 6 檔丟進去，它給你一份摘要——每週 150 分鐘中等強度有氧、肌力每週 2 天、膝蓋不適先選低衝擊；每句話指得出是世衛、衞生署還是運動科學網講的。選什麼文章、信不信，還是你決定——但一小時的閱讀變成五分鐘。今天真正要帶走的主產品仍是提取表，這份摘要只是草稿。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">口頭齊答——「資料我挑，閱讀它來，判斷我算。」</div></details>
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 038/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="38">
+  
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">快問快答 q.organize.01：它根據什麼回答</h2>
+  <div class="content-stack"><p class="lead"><strong><span class="focal">快問快答 q.organize.01</span></strong>（single／bloom：understand）</p>
+<p class="body-p">NotebookLM 這類閱讀輔助工具，回答問題的根據是？</p>
+<ul class="plain scan"><li>A. 它訓練時讀過的所有網路內容——那是一般對話 AI，來源追不到</li><li>B. 你放進筆記本的那幾份資料——只讀你給的，每個結論可回溯　<strong>正解</strong></li><li>C. 即時上網搜尋的最新結果——它讀的是你匯入的來源，不是即時搜尋</li><li>D. 老師預先寫好的標準答案——沒有這種機制</li></ul>
+<p class="body-p">Hint：「一個筆記本＝一組資料」——它只讀你餵給它的那組。</p></div>
+  
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 039/163 · 內容頁｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="39">
+  
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">快問快答 q.organize.02：問到資料沒有的東西</h2>
+  <div class="content-stack"><p class="lead"><strong><span class="focal">快問快答 q.organize.02</span></strong>（single／bloom：understand）</p>
+<p class="body-p">你問 NotebookLM 一個「你的資料裡完全沒提」的問題，理想的反應是？</p>
+<ul class="plain scan"><li>A. 照樣給出詳細答案——那表示它開始用猜的，跟一般幻覺沒兩樣</li><li>B. 告訴你資料裡沒提到相關內容——這正是「只讀你給的資料」的證據　<strong>正解</strong></li><li>C. 自動幫你上網找答案補上——來源就混進你沒審查過的東西了</li><li>D. 直接當機——正常工具不會這樣</li></ul>
+<p class="body-p">Hint：回想本段的對照表：NotebookLM 只讀你給的資料——問到資料裡沒有的東西，誠實的反應該是什麼？</p></div>
+  
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 040/163 · 本章重點｜暖身篇：回顧與 AI 是怎麼「讀」的 -->
+<section class="slide" data-source-page="40">
+  
+  <div class="slide-header"><span class="eyebrow">暖身篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">本章重點：暖身篇：回顧與 AI 是怎麼「讀」的</h2>
+  <div class="content-stack"><div class="summary-card"><ul><li>上堂帶走的是可讀資料堆；今天主產品是提取表，摘要只是草稿（出自 <code>organize.intro</code>）</li><li>官方新聞還要分五型，指引才精讀；原料是文字檔，本堂不重跑新聞搜尋（出自 <code>organize.catchup</code>）</li><li>NotebookLM 只根據你給的資料回答，結論可回溯（出自 <code>organize.how-ai-reads</code>）</li><li>它的角色是「閱讀加速器」，不是「替你讀書」（出自 <code>organize.how-ai-reads</code>）</li></ul></div></div>
+  
+  <div class="slide-meta"><span>暖身篇</span><span class="num"></span></div>
+</section>
+
+<!-- 041/163 · CHAPTER -->
+<section class="slide dark title-slide" data-source-page="41">
+  <div class="cover-art" style="background-image:url('img/organize-open-demo.webp')"></div>
+  <span class="chapter-index">04</span>
+  <h1 class="title">示範篇：跟著老師整理一次</h1>
+  <div class="opener-tag"><p class="lead">（本章 60 分鐘）</p></div>
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 042/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="42">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">示範預告：先看老師把六檔變成<span class="focal">提取表</span></h2>
+  <div class="content-stack"><p class="lead">老師把範例資料包 6 檔（世衛、衞生署、澳門衛生局、運動科學網、模擬開箱文、體育局嘉年華）丟進 NotebookLM。第 6 檔必餵。現場先提問做出提取表，再問跨來源歸納；最後才點一次「報告／摘要」當對照組。看的時候注意：每一筆主張都指得出是哪份檔講的，嘉年華那列要標存疑。</p>
+<p class="body-p">這段是老師操作、學員只看不做；示範完會休息十分鐘，安心看。</p></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 043/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="43">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">觀察任務：看示範時只記三件事</h2>
+  <div class="content-stack"><p class="lead">看示範時，腦子裡記三件事，等下抽人回答：</p>
+<ol class="plain"><li>它讀了幾份來源？你怎麼知道？</li><li>提取表有沒有寫出處？第 6 檔嘉年華有沒有標存疑？</li><li>問到資料裡沒有的東西，它怎麼回？</li></ol>
+<p class="body-p">先記在腦子裡，不寫下來，眼睛盯屏幕。</p></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 044/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="44">
+  <figure class="figure"><img src="img/organize-one-notebook.webp" alt="一個主題一個筆記本：左＝兩本各裝一疊整齊；右＝一本裡兩堆資料線纏成結"></figure>
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">用 Google 帳號登入：NotebookLM 的單位是「筆記本」</h2>
+  <div class="content-stack"><p class="lead">NotebookLM 用 Google 帳號就能登入。它的單位是「筆記本」：先建一個筆記本，把資料放進去，然後對這些資料提問、做出提取。</p>
+<p class="body-p">一個主題一個筆記本（例：「我的重訓問題」）。之後你的資料、你的提問、你的提取表，都住在這個筆記本裡。</p>
+<p class="body-p">為什麼要分本？因為<strong>一本筆記本就是你給它的世界</strong>：換主題就開新筆記本，不要把第二個主題塞進同一本——塞了，它提問時就會把兩堆資料混著引用，你追來源會追到不相干的檔案，前面講的「只讀你給的資料」就白講了。</p>
+<p class="body-p">命名原則：主題＋用途，看到名字就知道裡面裝什麼（例：「換屋決策——三個屋苑比較」「重訓——膝蓋與菜單」）。名字取得含糊，三個月後你自己也認不出來——這跟成果篇四項自檢的「有自己的話」是同一件事。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">現在用一句話說出你要開的筆記本名稱，講給鄰座聽；鄰座聽不懂主題的，名字就重取一次。</div></details>
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 045/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="45">
+  <figure class="figure"><img src="img/organize-four-zones.webp" alt="四區導覽：合上的筆記本＝建本、紙張落入打開的本＝加來源、對話泡帶標籤＝對話區、工作檯上心智圖喇叭報告＝工作室"></figure>
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">四區導覽：建筆記本→加來源→對話區→工作室</h2>
+  <div class="content-stack"><ol class="plain"><li>建筆記本——一個主題一個筆記本（例：「我的重訓問題」）</li><li>加來源——貼文字、上傳檔案，都是「來源」</li><li>對話區——對這些來源提問，答案附來源標記；提取表在這裡問出來</li><li>工作室與對話——心智圖、語音摘要、報告等一鍵產出；一鍵「報告／摘要」等下當對照組，不當成品</li></ol>
+<div class="tip-box"><span class="focal">提示</span><strong>課堂怎麼加來源</strong>：文字檔直接上傳；網頁內容可以複製貼上存成文字檔再上傳。不用擔心格式醜，它讀得懂。</div></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 046/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="46">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">跟做：現在登入，建一個用你主題命名的筆記本</h2>
+  <div class="content-stack"><p class="lead">換你動手，三步：</p>
+<ol class="plain"><li>打開 NotebookLM（用你的 Google 帳號）</li><li>新建一個筆記本</li><li>用你的主題命名——例：「我的重訓問題」「換屋決策資料」</li></ol></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 047/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="47">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">跟做確認＋卡關排除：筆記本建好了嗎</h2>
+  <div class="content-stack"><p class="lead">卡關三條線索：</p>
+<ol class="plain"><li>登不進去——確認用的是 Google 帳號，不是別的信箱</li><li>找不到新建按鈕——先問鄰座，再舉手</li><li>畫面一直轉——重新整理一次，等 30 秒</li></ol></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">建好的舉手；指著屏幕唸出你筆記本的名字給鄰座聽。</div></details>
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 048/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="48">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">[步驟一] 放來源：老師現場把 6 份資料加進筆記本</h2>
+  <div class="content-stack"><p class="lead">老師用範例資料包現場操作：依序加入世衛→衞生署→澳門衛生局→運動科學網→模擬開箱文→體育局嘉年華。第 6 檔必餵（活動型、略讀），不是漏加，是故意讓它有機會把人次寫成處方。</p>
+<p class="body-p">看的時候注意：每加一份，左欄來源清單多一行；它讀的只有這幾份，別的都進不來。</p></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 049/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="49">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">觀察重點：它真的「都讀了」——含第 6 檔</h2>
+  <div class="content-stack"><p class="lead">口頭快問快答（舉手搶答）：</p>
+<ol class="plain"><li>它現在讀了幾份來源？——6 份</li><li>你怎麼知道？——左欄來源清單看得到</li><li>第 6 檔嘉年華加進去了嗎？——示範必餵；等下提取表那列要標存疑</li></ol></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 050/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="50">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">[步驟二・發一] 提問做出提取表</h2>
+  <div class="content-stack"><p class="lead">老師在對話區貼上這一整段，不要改寫：</p>
+<div class="quote-block"><span class="focal">Q1</span> 只根據我勾的各檔，列成四欄：主張、數字或條件、出處（檔名）、我信或存疑；一條主張一列。給 45 歲、想開始運動、沒有教練的人看。來源沒寫的填「來源未載」，不要用常識補。不要寫成一段通順介紹。繁體中文。</div>
+<p class="body-p">四欄就是今天的主產品：主張｜原文依據｜出處｜我信／存疑。出處＝檔名＝可讀資料堆表的「來源是誰」。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">口頭齊答——「不要寫成一段通順介紹。」那是對照組才要看的東西。</div></details>
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 051/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="51">
+  <figure class="figure"><img src="img/organize-extract-table.webp" alt="提取表四欄"></figure>
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">觀察重點：提取表長這樣；第 6 檔標存疑</h2>
+  <div class="content-stack"><p class="lead">現場產出對照這幾列（數字以原文為準）：</p>
+<table class="data"><thead><tr><th scope="col">主張</th><th scope="col">原文依據</th><th scope="col">出處</th><th scope="col">我信／存疑</th></tr></thead><tbody><tr><td>成年人每週至少 150 分鐘中等強度有氧</td><td>每星期應進行最少 150 分鐘</td><td>世衛／第 1 檔</td><td>我信</td></tr><tr><td>「起來。鬆一鬆」約 15 分鐘、每日 2 次可達標</td><td>每日 2 次即達世衛 150 分鐘</td><td>澳門衛生局／第 3 檔</td><td>我信</td></tr><tr><td>康體嘉年華兩天共 6,000 人次</td><td>6,000 人次、充氣山丘</td><td>體育局／第 6 檔</td><td>存疑／不當處方</td></tr></tbody></table>
+<p class="body-p">第 6 檔是官方、是熱鬧，但人次≠個人運動處方。略讀仍必餵，餵了才有機會在表上標存疑。</p>
+<p class="body-p"><strong>小練習</strong>（記在腦子裡）：哪一列你會改標「存疑」？為什麼？</p>
+<p class="body-p"><strong>換成上班的樣子</strong>：把三列換成三家供應商——主張＝報價與交期、原文依據＝報價單上那一行、出處＝檔名與日期、我信／存疑＝有沒有寫清楚含不含稅。同一張表，換一批料而已。</p></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 052/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="52">
+  <figure class="figure"><img src="img/organize-agree-fight.webp" alt="同意與打架"></figure>
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">[步驟二・發二] 跨來源歸納</h2>
+  <div class="content-stack"><p class="lead">老師再貼上這一整段，不要改寫：</p>
+<div class="quote-block"><span class="focal">Q2</span> 只根據來源回答三題，每一句附引用：哪些主張世衛與澳門衛生局都同意？開箱文跟官方打架在哪？嘉年華那則為什麼不能寫進「我該怎麼開始運動」？來源沒說的寫「來源未載」，不要替我補。</div>
+<p class="body-p">看它怎麼分三堆：同意、打架、不能當處方。這三堆等下實戰篇你自己也要寫。</p></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 053/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="53">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">對照組：點一次「報告／摘要」</h2>
+  <div class="content-stack"><p class="lead">兩發問完，老師再點一次工作室「報告」（或對話區請它產重點摘要）。這份通順介紹是<strong>對照組</strong>，不是成品。</p>
+<p class="body-p">盯兩個坑：</p>
+<ol class="plain"><li>混來源——世衛、衛生局、開箱文、嘉年華揉成一段，分不清誰講的</li><li>把人次寫成處方——「6,000 人次」變成「所以你該怎麼開始運動」</li></ol>
+<p class="body-p">這就是為什麼主產品是提取表，摘要只是草稿。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">口頭齊答——「摘要是草稿，提取表才是主產品。」</div></details>
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 054/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="54">
+  <figure class="figure"><img src="img/organize-not-in-docs.webp" alt="問到資料沒有的：問號泡指著文件堆旁邊的空白，空手加空氣泡＝老實說不知道"></figure>
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">[步驟三a] 故意問一個「資料裡沒有」的問題</h2>
+  <div class="content-stack"><p class="lead">老師故意問一個這堆資料完全沒提的問題——建議問：「這個主題跟青少年近視有沒有關係？」——看它怎麼處理。</p>
+<div class="tip-box"><span class="focal">提示</span><strong>示範時故意問一個「資料裡沒有」的問題</strong>：看它怎麼處理：理想的工具會說資料裡沒提到，而不是自己編。這正是「只讀你給的資料」的證據。</div>
+<p class="body-p">全班一起判斷：它老實說不知道，還是開始編？</p></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 055/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="55">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">[步驟三b] 追來源：點來源標記看原文</h2>
+  <div class="content-stack"><p class="lead">老師挑兩筆結論，點進來源標記，看原文怎麼說：</p>
+<ul class="plain scan"><li>第一筆：「成年人每週至少 150 分鐘中等強度有氧」→點標記→世衛原文「每星期應進行最少 150 分鐘」——一致</li><li>第二筆：「膝蓋不適先選快走、單車、水中運動」→點標記→運動科學網原文——一致，且原文多一條安全界線（尖銳刺痛即停）</li><li>加看第 6 檔：若摘要把 6,000 人次寫成處方→點標記→體育局原文是嘉年華人次——提取表標存疑／不當處方</li></ul>
+<p class="body-p">結論有沒有扭曲原文？有沒有放大或縮小？點一下就跳到原文段落——這就是「追得到」。</p>
+<p class="body-p">等下實戰篇的「批判檢查」，就是在做這個動作。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">口頭齊答——「點一下標記，原文就跳出來；跳不出來的，就不算追得到。」等下你自己做時，每一筆主張都要能這樣點開。</div></details>
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 056/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="56">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">加映：音訊概覽——把資料變成一段對談</h2>
+  <div class="content-stack"><div class="tip-box"><span class="focal">提示</span><strong>加映：音訊概覽</strong>：有時間就現場點工作室的「語音摘要」生成一次「音訊概覽」——它把這堆資料變成兩段對談語音。成人班對這個功能最有感，也是下課後會跟朋友講的亮點。</div>
+<p class="lead">先講預期：生成要等幾分鐘，語音以英文為主（部分語言有繁中但品質不一）——回家試的時候別以為壞掉。操作路徑：右邊「工作室」→「語音摘要」→生成。</p>
+<p class="body-p">定位要講清楚：<strong>音訊概覽是複習用的，不是查證用的，更不是提取。</strong> 語音裡點不到來源標記，不能拿它當結論；聽到跟提取表不一樣的地方，回文字版點標記追原文。</p>
+<p class="body-p">這段是本章的彈性緩衝：生成太慢就只講預期，下課後請學員自己產一次，不要把兩發提問、對照組或「問資料裡沒有的問題」的時間挪過來。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">回家用自己的筆記本產一次音訊概覽，通勤時聽；聽到一處跟提取表不同的地方，回文字版追來源。</div></details>
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 057/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="57">
+  <figure class="figure"><img src="img/organize-trace-three.webp" alt="回溯來源三步：手抽橘卡＝挑結論、游標點標籤打開原文＝點來源、兩份文件上天平＝對一比"></figure>
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">整理完別急著收工：回溯來源三步</h2>
+  <div class="content-stack"><p class="lead">會<span class="focal">回溯來源</span>，才叫「用 AI 整理」而不是「叫 AI 亂寫」。</p>
+<p class="body-p">NotebookLM 的每筆結論旁都有來源標記。整理完不要急著收工，抽幾筆做回溯：</p>
+<ol class="plain"><li>挑結論——從提取表裡挑三筆「最重要的」和兩筆「最可疑的」（含第 6 檔人次、開箱文賣貨）</li><li>點來源——打開來源標記看原文段落</li><li>對一比——結論有沒有扭曲、放大或漏掉原文的意思</li></ol></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 058/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="58">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">全班跟做：用老師的示範提取表回溯一筆</h2>
+  <div class="content-stack"><p class="lead">跟著老師一起做一遍：</p>
+<ol class="plain"><li>老師從示範提取表挑一筆——建議挑模擬開箱文帶出的那句：「運動一定磨損關節，不補充氨糖就等於白練」</li><li>全班一起點來源標記，讀原文那一段——原文是會館自家專欄，同一段還在賣「關節靈氨糖精華」</li><li>舉手表態：跟原文意思一致的舉手；覺得被放大的也舉手——這筆就是「最可疑」的標準答案</li><li>加一筆：嘉年華 6,000 人次——原文是活動人次，不是運動處方；提取表標存疑／不當處方</li></ol></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 059/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="59">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">練習：挑「最重要的」和「最可疑的」</h2>
+  <div class="content-stack"><p class="lead">從剛才的示範提取表裡：</p>
+<ol class="plain"><li>挑一筆你覺得「最重要的」</li><li>挑一筆你覺得「最可疑的」（開箱文賣貨、嘉年華人次當處方，都算）</li></ol>
+<p class="body-p">跟鄰座各說一句：為什麼它可疑？（例：「不補充氨糖就等於白練」——原文是賣產品的會館自家專欄；「6,000 人次」——活動熱鬧≠我該怎麼開始運動）</p>
+<p class="body-p">抽 2 位說給全班聽。</p></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 060/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="60">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">快問快答 q.organize.03：摘要出來先做什麼</h2>
+  <div class="content-stack"><p class="lead"><strong><span class="focal">快問快答 q.organize.03</span></strong>（single／bloom：analyze）</p>
+<p class="body-p">AI 摘要產出來之後，最該先做的是？</p>
+<ul class="plain scan"><li>A. 直接複製貼上收工——那是 AI 的重點，不一定是你的重點</li><li>B. 抽幾筆結論回溯來源，確認沒有扭曲原文——先驗證再使用　<strong>正解</strong></li><li>C. 叫 AI 再產一次，選比較長的那份——長短跟正確無關</li><li>D. 把摘要全部刪掉自己重寫——那就沒用到工具的價值了</li></ul>
+<p class="body-p">Hint：回想剛才示範的回溯動作：挑結論、點來源、對一比——摘要出來後先做哪一步？</p></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 061/163 · 內容頁｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="61">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">快問快答 q.organize.04：摘要漏了重點怎麼辦</h2>
+  <div class="content-stack"><p class="lead"><strong><span class="focal">快問快答 q.organize.04</span></strong>（single／bloom：analyze）</p>
+<p class="body-p">AI 的摘要漏掉你資料裡一個重點，最好的處理方式是？</p>
+<ul class="plain scan"><li>A. 整份資料重傳一次——重傳不會改變它的取捨</li><li>B. 算了，AI 沒選到就是不重要——重要與否由你判斷，不是由 AI 判斷</li><li>C. 針對那個重點重新提問（如「請只根據第二份資料整理…」），再把結果補進筆記——問法決定它挑什麼，重新問比重傳有效　<strong>正解</strong></li><li>D. 換一個 AI 工具重做——換工具不保證不漏</li></ul>
+<p class="body-p">Hint：它讀的是你給的資料——漏了，就換個問法請它針對那個重點再整理一次。</p></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 062/163 · 本章重點｜示範篇：跟著老師整理一次 -->
+<section class="slide" data-source-page="62">
+  
+  <div class="slide-header"><span class="eyebrow">示範篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">本章重點：示範篇：跟著老師整理一次</h2>
+  <div class="content-stack"><div class="summary-card"><ul><li>餵 6 檔，第 6 檔嘉年華必餵；提取表把人次標存疑／不當處方（出自 <code>organize.notebooklm-walkthrough</code>）</li><li>先發提取、再發歸納；一鍵報告／摘要是對照組，混來源所以不當成品（出自 <code>organize.notebooklm-walkthrough</code>）</li><li>摘要產出來之後，抽樣回溯來源是必要動作（出自 <code>organize.trace-source</code>）</li><li>重點抽「最重要的」和「最可疑的」兩類（出自 <code>organize.trace-source</code>）</li></ul></div></div>
+  
+  <div class="slide-meta"><span>示範篇</span><span class="num"></span></div>
+</section>
+
+<!-- 063/163 · CHAPTER -->
+<section class="slide dark title-slide" data-source-page="63">
+  <div class="cover-art" style="background-image:url('img/organize-open-practice.webp')"></div>
+  <span class="chapter-index">05</span>
+  <h1 class="title">實戰篇：整理你自己的資料</h1>
+  <div class="opener-tag"><p class="lead">（本章 100 分鐘）</p></div>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 064/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="64">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">換你了：把可讀資料堆變成<span class="focal">自己的</span>重點筆記</h2>
+  <div class="content-stack"><p class="lead">接下來你會把上堂的可讀資料堆（或課堂提供的範例資料包）放進自己的 NotebookLM，填提取表，摘要只當草稿，再用批判檢查與跨來源歸納，修成一份真正能用的重點筆記。</p>
+<p class="body-p">今天下課前，每個人手上要有一份「自己主題」的重點筆記——提取表＋歸納段＋下一步。這是今天帶走的東西。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">口頭齊答——今天帶走的東西是什麼？（答：一份「自己主題」的重點筆記：提取表＋歸納＋下一步。）答得出來，接下來這一章你就知道自己在做什麼。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 065/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="65">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">材料確認：每個人手上都要有東西可餵</h2>
+  <div class="content-stack"><p class="lead">現在確認，不要等到操作卡住才發現：</p>
+<ol class="plain"><li>有可讀資料堆（紙或照片）＋文字檔的——舉手</li><li>用範例資料包的——舉手（沒領的現在去領，6 檔）</li><li>筆記本建好的——指給鄰座看</li></ol></div>
+  
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 066/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="66">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">第一輪任務宣布：三步，倒數 35 分鐘</h2>
+  <div class="content-stack"><ol class="plain"><li>把可讀資料堆的文字檔進筆記本——精讀檔必餵；領包的第 6 檔必餵；自己堆裡的活動型可以不餵；淘汰檔不餵</li><li>填提取表——對話區貼發一（主張｜原文依據｜出處｜我信／存疑）；可同時產摘要當草稿</li><li>先讀一遍——把提取表（與草稿摘要）從頭讀到尾，把「覺得怪」的地方記下來</li></ol>
+<p class="lead">這一段主產品是提取表，摘要只是草稿。批判檢查是下一段的事。倒數器啟動：35 分鐘。</p></div>
+  
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 067/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="67">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作①a：卡關三條，開始把文字貼進來源列</h2>
+  <div class="content-stack"><p class="lead">把上堂存好的文字內文逐一加入：直接貼入最方便，手機也行。</p>
+<p class="body-p"><strong>卡關三條線索</strong>：</p>
+<ol class="plain"><li>上傳卡住——改用直接複製貼上</li><li>只剩截圖——優先補存文字；補不完用資料包，不要開新聞搜尋</li><li>別把圖直接上傳（讀不出來）</li></ol>
+<p class="body-p">少於 4 筆，用資料包補；領包 6 檔全加，第 6 檔必餵。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">來源列至少 1 筆的舉手。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 068/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="68">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作①b：繼續加檔，轉圈就改貼上</h2>
+  <div class="content-stack"><p class="lead">繼續加到精讀檔都在。上傳轉圈超過一分鐘，改複製貼上。領包生核對第 6 檔在不在。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">領包生第 6 檔在來源列。自己堆精讀檔有進。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 069/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="69">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作①c：數筆數，少於 4 筆現在領包</h2>
+  <div class="content-stack"><p class="lead">來源列舉手報筆數。少於 4 筆現在領包補，不要等。12 分加檔時鐘到此，沒加完帶進提問頁。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">4 筆或已領包補的舉手。沒舉手的記下，提問頁用老師本。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 070/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="70">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作②a：原封貼上發一</h2>
+  <div class="content-stack"><p class="lead">在對話區貼上發一（與示範同一段，不要改寫）：</p>
+<div class="quote-block"><span class="focal">現場提問・發一</span> 只根據我勾的各檔，列成四欄：主張、數字或條件、出處（檔名）、我信或存疑；一條主張一列。給 45 歲、想開始運動、沒有教練的人看。來源沒寫的填「來源未載」，不要用常識補。不要寫成一段通順介紹。繁體中文。</div>
+<p class="body-p">可同時點一次「報告／摘要」當草稿，那不是成品。</p>
+<div class="tip-box"><span class="focal">提示</span><strong>隱私紅線</strong>：不要放身份證號、病歷、帳戶、客戶資料。用公開資料或去個資化內容。</div></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">對話區看得到發一原文的舉手。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 071/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="71">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作②b：達標四件事——列、出處、存疑、第六檔</h2>
+  <div class="content-stack"><p class="lead">達標線：至少 4 列、至少 2 個不同出處（檔名）、至少 1 列存疑。領包：第 6 檔那列標存疑／不當處方。出處寫「網上看到」的改檔名。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">4 列且有 1 列存疑的舉手。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 072/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="72">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作③a：從頭讀到尾，記下怪處</h2>
+  <div class="content-stack"><p class="lead">不准按生成。把提取表從頭讀到尾，記下：</p>
+<ol class="plain"><li>出處對不上檔名</li><li>你熟悉的重點表裡沒列</li><li>活動型寫成處方、開箱文賣貨</li></ol></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">紙上或活動頁有至少 1 處怪。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 073/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="73">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作③b：抽兩人說一處怪</h2>
+  <div class="content-stack"><p class="lead">讀完舉手。抽 2 位說一個覺得怪的地方——那些就是下一頁批判的起點。第一輪 35 分到此。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">全班聽到至少兩處具體的怪。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 074/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="74">
+  <figure class="figure"><img src="img/critical-check-steps.webp" alt="批判檢查三步：放大鏡＝對照來源、拼圖補缺＝找遺漏、回轉箭頭＝修提問"></figure>
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">AI 的摘要是草稿：批判檢查三步總覽</h2>
+  <div class="content-stack"><p class="lead">AI 產的摘要是草稿，不是成品。提取表也要過三輪檢查：</p>
+<ul class="plain scan"><li><strong>對照來源</strong> — 抽幾筆主張回溯原文，看有沒有扭曲或放大</li><li><strong>找遺漏</strong> — 你的資料裡有、但提取表沒列的重點，自己補上去</li><li><strong>修提問</strong> — 對不滿意的那段，重新問（例：「請只根據第二份資料整理…」）再產一次</li></ul>
+<p class="body-p">三步之後還有短步：跨來源歸納。接下來講一步、做一步，不要搶跑。</p></div>
+  
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 075/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="75">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">步驟一：對照來源——現在就做</h2>
+  <div class="content-stack"><ul class="plain scan"><li>[步驟一・進行中] <strong>對照來源</strong> — 抽幾筆主張回溯原文，看有沒有扭曲或放大</li><li>[步驟二・待做] <strong>找遺漏</strong> — 你的資料裡有、但提取表沒列的重點，自己補上去</li><li>[步驟三・待做] <strong>修提問</strong> — 對不滿意的那段，重新問（例：「請只根據第二份資料整理…」）再產一次</li></ul>
+<p class="lead">從你的提取表裡抽幾筆主張，點來源標記回溯原文：</p>
+<ol class="plain"><li>主張跟原文意思一樣嗎？</li><li>有沒有被扭曲、放大或縮小？</li><li>有問題的，在「我信／存疑」改標存疑</li></ol>
+<p class="body-p">做完一筆再做下一筆；至少對照兩筆。領包的人必對第 6 檔。</p></div>
+  
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 076/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="76">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">步驟二：找遺漏——現在就做</h2>
+  <div class="content-stack"><ul class="plain scan"><li>[步驟一・完成] <strong>對照來源</strong> — 抽幾筆主張回溯原文，看有沒有扭曲或放大</li><li>[步驟二・進行中] <strong>找遺漏</strong> — 你的資料裡有、但提取表沒列的重點，自己補上去</li><li>[步驟三・待做] <strong>修提問</strong> — 對不滿意的那段，重新問（例：「請只根據第二份資料整理…」）再產一次</li></ul>
+<p class="lead">你的資料裡有、但提取表沒列的重點——自己補上去。</p>
+<ol class="plain"><li>回想你讀原文時記下的重點</li><li>表裡沒出現的，手動補一列（主張｜原文依據｜出處｜我信／存疑）</li><li>補的時候寫明出自哪份檔</li></ol>
+<p class="body-p">重要與否由你判斷，不是由 AI 判斷。</p></div>
+  
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 077/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="77">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">步驟三：修提問——現在就做</h2>
+  <div class="content-stack"><ul class="plain scan"><li>[步驟一・完成] <strong>對照來源</strong> — 抽幾筆主張回溯原文，看有沒有扭曲或放大</li><li>[步驟二・完成] <strong>找遺漏</strong> — 你的資料裡有、但提取表沒列的重點，自己補上去</li><li>[步驟三・進行中] <strong>修提問</strong> — 對不滿意的那段，重新問（例：「請只根據第二份資料整理…」）再產一次</li></ul>
+<p class="lead">對不滿意的那段，重新問，再產一次：</p>
+<ul class="plain scan"><li>例：「請只根據『澳門衛生局新聞稿』整理：在家或辦公室就能做的運動，條列，每條附引用；沒寫的填『來源未載』；繁體中文」</li><li>例：「請針對『膝蓋不適』整理，給條件：只列有來源支持的，並註明出自哪份；沒有來源支持的寫『來源未載』；繁體中文」</li><li>操作上也可直接在來源區勾選單一來源再提問，效果相同</li></ul>
+<p class="body-p">記得之前預告的提問三式：給身分、給條件、要格式——問法決定它挑什麼。</p></div>
+  
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 078/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="78">
+  <figure class="figure"><img src="img/organize-copy-pit.webp" alt="最常見的坑：左＝機器人把摘要丟進外帶袋走人；右＝鉛筆補上你的話再打勾"></figure>
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">最常見的坑：直接把 AI 摘要複製走人</h2>
+  <div class="content-stack"><div class="tip-box"><span class="focal">提示</span><strong>最常見的坑</strong>：直接把一鍵摘要複製貼上走人。摘要會混來源，不一定是「你的」重點——你的問題、你的決定，要自己補進提取表與歸納。</div>
+<p class="lead"><strong>自檢練習</strong>：現在看你的筆記一眼——有沒有提取表？有沒有一句「你自己的話」？沒有，等下第二輪一定要補。</p></div>
+  
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 079/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="79">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">短步：跨來源歸納三段</h2>
+  <div class="content-stack"><p class="lead">三步之後，現在寫歸納。三段都要有字，空白不算：</p>
+<ol class="plain"><li><strong>各方同意</strong>——哪些主張至少兩份來源都講？</li><li><strong>打架或層級</strong>——官方新聞 vs 國際指引 vs 開箱；活動型誤當指引也算。沒有事實打架，就寫層級差（例：新聞稿是宣導、世衛是指引、開箱是廣告、嘉年華是活動）</li><li><strong>我的下一步</strong>——必須是你自己的話</li></ol>
+<p class="body-p">禁止空白。不要抄鄰座的句子，層級差怎麼寫由你判斷。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">三段都落了字的舉手；抽 1 位唸「打架或層級」那一段——沒有標準逃句。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 080/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="80">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">快問快答 q.organize.05：哪一項才算提取</h2>
+  <div class="content-stack"><p class="lead"><strong><span class="focal">快問快答 q.organize.05</span></strong>（single／bloom：analyze）</p>
+<p class="body-p">把六份資料丟進閱讀工具之後，哪一項才算「提取」而不是「只有摘要」？</p>
+<ul class="plain scan"><li>A. 複製 AI 產出的一整段通順介紹，當自己的筆記</li><li>B. 列出每份資料的主張、數字或條件、出處，並標我信或存疑　<strong>正解</strong></li><li>C. 請它畫一張漂亮封面</li><li>D. 把摘要轉成音訊，通勤時當結論聽完就算</li></ul>
+<p class="body-p">Hint：摘要會混來源；提取要還原到檔案。活動型官方稿不該被寫成個人運動處方。Explain：正解是 B：主張–證據–出處還原到檔。A 是把摘要當成品；C 與提取無關；D 音訊是加分不是提取。</p></div>
+  
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 081/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="81">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">第二輪任務宣布：精修成你的最終筆記，倒數 42 分鐘</h2>
+  <div class="content-stack"><ol class="plain"><li>跑批判檢查三步＋歸納——對第一輪提取表逐項處理</li><li>補上你的東西——你的問題、結論、下一步行動</li><li>定案輸出——把最終版複製到你的筆記（手機備忘錄、紙本都行）</li></ol>
+<div class="tip-box"><span class="focal">提示</span><strong>完成標準</strong>：一份你自己讀得懂的重點筆記：有提取表、每筆有出處、有歸納、有自己的話。</div></div>
+  
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 082/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="82">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作①a：先對一列原文</h2>
+  <div class="content-stack"><p class="lead">第二輪開始。順序不准跳：這一頁只做對照。挑一列主張，點來源，抄原文十五字。不一致改表，不要改原文遷就 AI。第 6 檔在表裡必標存疑或寫明不是處方。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">至少一列對過原文。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 083/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="83">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作①b：找遺漏，針對漏的重問</h2>
+  <div class="content-stack"><p class="lead">遺漏＝堆裡有、表裡沒有。補一列。然後針對漏的那點重問，不要整份重傳。新結果補進表。</p>
+<p class="body-p"><strong>中途檢查點</strong>：還在對照的先做完對照再說——這步最容易跳、也最值錢。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">表上有一列是你手動補的或重問補的。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 084/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="84">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作①c：寫歸納三段，抽存疑列</h2>
+  <div class="content-stack"><p class="lead">現在才寫 #synth：同意／打架或層級／下一步。第三段必須是你的話；整段貼 AI 的還差一步，用自己的話改寫一句就算數。抽兩本指存疑列。指不出來現在標嘉年華或開箱。14 分批判時鐘到此。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">三段有字；抽到的人指得出存疑列。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 085/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="85">
+  <figure class="figure"><img src="img/organize-three-sentences.webp" alt="你補上的三句：火花泡＝最想確認、旗子插在結論卡＝我的結論、箭頭通向門口＝下一步"></figure>
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作②a：寫下三句</h2>
+  <div class="content-stack"><p class="lead">AI 寫它讀到的，你寫你要的：</p>
+<ol class="plain"><li>「我最想確認的是……」</li><li>「我的結論是……」（要對得回提取表某一列）</li><li>「我的下一步是……」（文獻類型，不是再問 AI）</li></ol>
+<p class="body-p">沒有這三句，還只是 AI 的草稿。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">三句都有字。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 086/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="86">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作②b：抽一人唸下一步</h2>
+  <div class="content-stack"><p class="lead">抽一人唸第三句。標準長這樣：「我要找衞生署或世衛有沒有寫膝蓋不適能不能做開合跳。」寫再搜／再問模型的，改口：要找哪一類文件？10 分三句時鐘到此。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">全班聽到一句合格的文獻類型下一步。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 087/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="87">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作③a：複製最終版，標題寫主題</h2>
+  <div class="content-stack"><p class="lead">複製提取表＋歸納三段＋你的三句。存進備忘錄、電郵給自己、或活動頁截圖。標題寫主題，不要未命名。從頭到尾再讀一遍。心智圖下一頁才做。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">標題不是未命名。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 088/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="88">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">操作③b：下班打得開嗎</h2>
+  <div class="content-stack"><p class="lead">問鄰座：下班／放學你打得開嗎？打不開現在改存。十秒內告訴鄰座你存在哪。沒存完用手機拍螢幕也算帶走。10 分定案時鐘到此。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">鄰座說得出對方存在哪。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 089/163 · 內容頁｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="89">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">加分延伸：心智圖與音訊概覽</h2>
+  <div class="content-stack"><div class="tip-box"><span class="focal">提示</span><strong>有時間就加分</strong>：點工作室的「心智圖」產一張圖：把重點之間的關係畫出來，跟提取表配成一對，回頭複習更快。</div>
+<p class="lead">做得快的人：再用「音訊概覽」把筆記變成一段語音，通勤時用聽的複習。音訊是加分，不是提取。</p>
+<p class="body-p">心智圖不要產完就存檔，三步用：</p>
+<ol class="plain"><li>看分群——它把重點分成幾群？分群方式跟你提取表的出處一致嗎？不一致的地方，通常就是混來源</li><li>挑一枝——選一個你最有感的分支，點回它的來源，確認原文真的這樣說</li><li>配成一對——圖貼在文字筆記最前面當目錄：先看圖想起結構，再看表拿到出處</li></ol>
+<p class="body-p">要講清楚的局限：<strong>它畫的是「關係」，不是「重要性」</strong>。分支多不代表重點多；圖裡的每一個字，標準跟提取表一樣——追得到來源才算數。</p>
+<p class="body-p">還差得遠的人，達標下修：完成「提取表至少 4 列（含出處）＋歸納三段有字＋一句自己的結論」就算達標，心智圖與音訊都不強求。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">產出心智圖的人，指著圖上一個分支跟鄰座說一句「這枝對應我表的哪一列」；說不出對應的，那一枝就是 AI 自己長的，回文字版查清楚。</div></details>
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 090/163 · 本章重點｜實戰篇：整理你自己的資料 -->
+<section class="slide" data-source-page="90">
+  
+  <div class="slide-header"><span class="eyebrow">實戰篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">本章重點：實戰篇：整理你自己的資料</h2>
+  <div class="content-stack"><div class="summary-card"><ul><li>第一輪主產品是提取表（主張｜原文依據｜出處｜我信／存疑），摘要只是草稿（出自 <code>organize.import-round-one</code>）</li><li>批判檢查三步：對照來源→找遺漏→修提問（出自 <code>organize.critical-check</code>）</li><li>跨來源歸納三段：同意／打架或層級／我的下一步（出自 <code>organize.critical-check</code>）</li><li>AI 摘要是草稿，你的判斷才是成品（出自 <code>organize.critical-check</code>）</li></ul></div></div>
+  
+  <div class="slide-meta"><span>實戰篇</span><span class="num"></span></div>
+</section>
+
+<!-- 091/163 · CHAPTER -->
+<section class="slide dark title-slide" data-source-page="91">
+  <div class="cover-art" style="background-image:url('img/organize-open-result.webp')"></div>
+  <span class="chapter-index">06</span>
+  <h1 class="title">成果篇：分享你的重點筆記</h1>
+  <div class="opener-tag"><p class="lead">（本章 40 分鐘）</p></div>
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 092/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="92">
+  <figure class="figure"><img src="img/organize-checklist-four.webp" alt="四項自檢：拼圖文件打勾＝有提取表、氣泡連原文＝每筆有出處、兩卡對照＝有歸納、鉛筆寫在 AI 草稿旁＝有自己的話"></figure>
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">四項自檢：通過了，這份筆記<span class="focal">才算數</span></h2>
+  <div class="content-stack"><ol class="plain"><li>有提取表嗎——主張｜原文依據｜出處｜我信／存疑，至少 4 列</li><li>每筆有出處嗎——出處對得上檔名或可讀資料堆的「來源是誰」</li><li>有歸納嗎——同意／打架或層級／我的下一步，三段都有字</li><li>有自己的話嗎——結論與下一步是你寫的，不是純 AI 輸出</li></ol></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 093/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="93">
+  
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">動作：對著自己的筆記逐項打勾，沒過就地修</h2>
+  <div class="content-stack"><p class="lead">對著你的筆記，四項逐一打勾：</p>
+<ol class="plain"><li>哪一項沒勾？——現在就修，別留到下課</li><li>「出處」那項最容易失手：只寫「網上看到」不算，要寫檔名</li><li>修完再勾一次</li></ol></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 094/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="94">
+  
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">練習：鄰座互驗四項自檢</h2>
+  <div class="content-stack"><p class="lead">跟鄰座交換筆記，互相當審查員：</p>
+<ol class="plain"><li>讀對方的提取表與歸納一遍</li><li>四項自檢幫對方勾一次</li><li>有一項你不確定，就問對方：「這句出處是哪一檔？」</li></ol>
+<p class="body-p">對方問倒你的地方，就是你筆記裡該修的地方。</p></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 095/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="95">
+  
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">鄰座互看：各說一個對方補得好的地方</h2>
+  <div class="content-stack"><ol class="plain"><li>鄰座互看——交換筆記給隔壁看</li><li>各說一個對方補得好的地方——要具體：「你把嘉年華那列標存疑，很有用」</li></ol>
+<p class="lead">沒被抽到上台的人，你的筆記也在這一步被看見過了。</p></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 096/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="96">
+  
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">抽籤分享：每人 1 分鐘，三句話</h2>
+  <div class="content-stack"><p class="lead">抽籤或自願，選 3 到 4 位學員。每人一分鐘，講三句話：</p>
+<ol class="plain"><li>你的主題是什麼</li><li>提取表裡你最信的一列、最存疑的一列</li><li>你自己補了什麼（歸納或下一步）</li></ol></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 097/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="97">
+  
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">回饋時刻：一個具體稱讚＋一個改進點</h2>
+  <div class="content-stack"><p class="lead">每位分享完，老師給一個回饋：</p>
+<ul class="plain scan"><li>一個具體稱讚——說「哪一步做得對」，不說「很棒」</li><li>一個改進點——說「下次可以試試什麼」</li></ul>
+<p class="body-p">台下的人：記下一個你想借來用的做法，下課前想好要不要用在自己的筆記上。</p></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 098/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="98">
+  <figure class="figure"><img src="img/four-step-method.webp" alt="整套方法四步：放大鏡＝搜兩通道、盾牌＝查證、漏斗入筆記本＝讀提取歸納、天平與鉛筆＝判斷"></figure>
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">整套方法四步：搜（兩通道）→查證→讀（提取＋歸納）→判斷</h2>
+  <div class="content-stack"><ol class="plain"><li>搜（兩通道）——網頁通道抓雜網全貌；新聞搜尋查澳門官方怎麼說</li><li>查證——來源是誰、時效對不對、立場為何；官方新聞還分五型</li><li>讀（提取＋歸納）——把可讀堆的文字檔交給 AI，填提取表，再寫同意／打架／下一步</li><li>判斷——你的結論與下一步；工具負責速度，你負責判斷</li></ol></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 099/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="99">
+  
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">回問練習：這一步，你剛剛做了什麼？</h2>
+  <div class="content-stack"><p class="lead">老師不複述，換你說。四步逐一回問，抽人或搶答：</p>
+<ol class="plain"><li>「搜（兩通道）」的時候，你走了哪兩條？</li><li>「查證」問了哪三個問題？官方新聞還分哪五型？</li><li>「讀」的時候，你餵了什麼、提取表有幾列、歸納三段寫了什麼？</li><li>「判斷」你標了哪一列存疑、下一步是什麼？</li></ol>
+<p class="body-p">答得出來，這套方法就是你的了。</p></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 100/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="100">
+  <figure class="figure"><img src="img/organize-speed-judge.webp" alt="AI 負責速度你負責判斷：左＝碼錶閃電與飛過的文件；右＝手提起天平做判斷"></figure>
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">AI 負責速度，你負責判斷</h2>
+  <div class="content-stack"><p class="lead">搜（兩通道）→查證→讀（提取＋歸納）→判斷，四步就是整套方法。工具會一直換新，這套方法不會過時。</p>
+<p class="body-p">還有時間的話，現在開放提問——問什麼都行，比多講內容好。</p></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 101/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="101">
+  <figure class="figure"><img src="img/organize-home-three.webp" alt="回家三招：對話泡＝對話 AI、放大鏡加來源小牌＝AI 搜尋、打開的本加喇叭＝閱讀輔助"></figure>
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">回家三招：任何主流 AI 工具都通用</h2>
+  <div class="content-stack"><p class="lead">這套方法不綁工具。回家可以用課堂學的三招繼續練：</p>
+<ol class="plain"><li>對話 AI（如 ChatGPT、Gemini）——單篇提取照用；記得它會幻覺，重要結論要查證</li><li>AI 搜尋（如 Perplexity）——繼續練查證三步，把可讀堆愈做愈乾淨</li><li>閱讀輔助（如 NotebookLM）——把長文章、報告丟進去，練提取表＋歸納；試試「音訊概覽」當複習，不當結論</li></ol>
+<p class="body-p">若將來要找英文學術論文，才用 Google Scholar 或 arXiv。本兩堂不操作。</p></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 102/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="102">
+  
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">註冊與費用：免費額度夠你用</h2>
+  <div class="content-stack"><div class="tip-box"><span class="focal">提示</span><strong>註冊與費用</strong>：這三個工具都要自己註冊帳號（用 Google 帳號最快）；免費額度夠課堂與回家自練用，不用花錢。免費額度有每日或每月的次數上限，用到觸頂是正常現象，換個工具或明天再來即可。</div></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">現在把手機拿出來，把「回家要試的那一個工具」加到首頁或書籤；加好的舉手——沒加的人，回家通常就不會試了。</div></details>
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 103/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="103">
+  
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">自練作業（自願）：拿這週一個真決定練一次</h2>
+  <div class="content-stack"><div class="tip-box"><span class="focal">提示</span><strong>自練作業（自願）</strong>：找一個你這週真的要做的決定，用四步法走一次：搜（兩通道）→查證→讀（提取＋歸納）→判斷。原料是可讀堆的文字檔，不是再搜一輪當作業。下次遇到親友問「AI 會不會亂講」，你就是那個能回答的人。</div>
+<p class="lead">不交、不改、不評分——但做過一次的人，下週你會明顯不一樣。</p></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 104/163 · 內容頁｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="104">
+  
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">這一段收在這裡：提取表與歸納</h2>
+  <div class="content-stack"><p class="lead">提取表與歸納這一段到這裡。<strong>你手上已經有一份自己主題的筆記了</strong>——提取表＋歸納，有出處、有你的話。</p>
+<p class="body-p">後面還有三件事：對照表、一種呈現、四句口頭。</p>
+<p class="body-p">這一頁只確認一件事：<strong>你的提取表，出處那一欄每一列都有字。</strong> 完整要帶走什麼，留到全課最後一頁一起講。</p></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 105/163 · 本章重點｜成果篇：分享你的重點筆記 -->
+<section class="slide" data-source-page="105">
+  
+  <div class="slide-header"><span class="eyebrow">成果篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">本章重點：成果篇：分享你的重點筆記</h2>
+  <div class="content-stack"><div class="summary-card"><ul><li>四項自檢：有提取表、每筆有出處、有歸納、有自己的話（出自 <code>organize.notes-checklist</code>）</li><li>整套方法四步：搜（兩通道）→查證→讀（提取＋歸納）→判斷（出自 <code>organize.recap</code>）</li><li>AI 負責速度，你負責判斷（出自 <code>organize.recap</code>）</li><li>帶走：一份帶提取表與歸納的筆記、一套四步（出自 <code>organize.closing</code>）</li></ul></div></div>
+  
+  <div class="slide-meta"><span>成果篇</span><span class="num"></span></div>
+</section>
+
+<!-- 106/163 · CHAPTER -->
+<section class="slide dark title-slide" data-source-page="106">
+  <div class="cover-art" style="background-image:url('img/organize-open-ask.webp')"></div>
+  <span class="chapter-index">07</span>
+  <h1 class="title">提問即整理</h1>
+  <div class="opener-tag"><p class="lead">（本章 120 分鐘＝講 35＋工作紙 60＋回饋 25）</p>
+<p class="body-p">同一本筆記本、同一份可讀堆。不要新建「進階本」。</p></div>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 107/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="107">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">回收：資料沒有那題，有沒有被填洞？</h2>
+  <div class="content-stack"><p class="lead">抽兩人：你在現課問「來源沒有」的那題，AI 有沒有老老實實承認？</p>
+<p class="body-p">填洞長這樣：來源沒寫每週分鐘數，它卻給你「150 分鐘」——那是世衛那列滲過來，或訓練記憶。正確只有一句：根據提供的資料，沒有這項資訊。</p>
+<p class="body-p">現課證明它會指回來源。接下來要解決另一個壞習慣：只會問「幫我整理」——段 P 剛禁止的那句。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">兩人說完才翻頁。沒有自願的，抽籤。被填洞的那則，投影給全班看 20 秒。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 108/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="108">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">摘要只做第一層</h2>
+  <div class="content-stack"><p class="lead">整理有四層。這一頁只釘第一層：</p>
+<ol class="plain"><li><strong>覆蓋</strong>：裡面有什麼——摘要只做到這裡</li><li>結構：怎麼連、哪裡打架</li><li>缺口：還缺什麼證據</li><li>行動：給誰看、看完做什麼</li></ol>
+<p class="body-p">「幫我整理」＝把決定權交給模型，它幾乎永遠只還你第一層。進階提問一定要指定輸出：表、FAQ、時間軸、待辦、缺口清單。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">鄰座互說「摘要帶走的是哪一層」。標準：覆蓋。說「全部」的，退回這一頁。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 109/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="109">
+  <figure class="figure"><img src="img/organize-four-layers.webp" alt="四層：平面＝覆蓋、分欄＝結構、破洞＝缺口、箭頭＝行動"></figure>
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">後三層各長什麼樣</h2>
+  <div class="content-stack"><p class="lead">用今天的運動堆舉例，不要換題：</p>
+<ul class="plain scan"><li><strong>結構</strong>：世衛與衞生署都寫每週分鐘數；開箱文寫「三個月見證」——這不是同一層證據</li><li><strong>缺口</strong>：三份指引都沒寫「膝蓋不適能不能做開合跳」——下一步要找哪<strong>類</strong>文件</li><li><strong>行動</strong>：給 45 歲的自己看，看完決定「本週只做步行」，不是再產一份摘要</li></ul></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">請一人只選一層，舉他自己堆裡的例子。舉不出來的，用資料包第 5 檔開箱文對第 1 檔世衛。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 110/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="110">
+  <figure class="figure"><img src="img/organize-mit-three.webp" alt="實心圓＝覆蓋、破洞方塊＝缺口、資料夾加放大鏡＝下一步找哪類文獻"></figure>
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">MIT 精神三問，不要神化</h2>
+  <div class="content-stack"><p class="lead">地圖文不要賣「48 小時學完一學期」。要賣三問：</p>
+<ol class="plain"><li>專家該能答的 10 題（覆蓋）</li><li>來源引發但沒答的 5 題（缺口）</li><li>這 5 題缺哪類文獻（下一步搜尋）</li></ol>
+<p class="body-p">短材料用提示詞庫 B1b，不要硬套六本教科書。問題換了，你就從讀者變成研究者。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">跟鄰座說出第三問為什麼不能寫「再問更聰明的模型」。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 111/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="111">
+  <figure class="figure"><img src="img/organize-source-missing.webp" alt="欄位你定、格子它填：其他格都填了，中間一格是虛線空格＝來源未載"></figure>
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">對照表：錯問與對問</h2>
+  <div class="content-stack"><p class="lead">職業場合最有用的整理不是散文，是表。欄位你定，格子它填，空的寫「來源未載」。</p>
+<ul class="plain scan"><li>錯誤：「哪份運動建議最划算／最好？」——要評價、會填洞、不同機構不能直接比</li><li>正確：「每週分鐘數、強度、適用年齡三欄。沒寫就未載。每格要引用。」</li></ul>
+<p class="body-p">請一人把「哪份最好」改成三個表頭。改不出來的，用黑板上那三欄。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">全班看到三個可以當表頭的詞，不是形容詞。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 112/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="112">
+  <figure class="figure"><img src="img/organize-full-vs-gaps.webp" alt="左表全滿＝有人在猜；右表留著虛線空格＝來源未載"></figure>
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">評量看有沒有「未載」</h2>
+  <div class="content-stack"><p class="lead">一張全填滿的表，通常代表有人在猜。評量我會看有沒有「來源未載」。</p>
+<p class="body-p">來源勾選是清洗：比三份指引就只勾那三份，不要連開箱文一起勾，否則它會用見證去補分鐘數。</p>
+<p class="body-p">標準：影片或某份指引沒說 150 分鐘，就不能用世衛那列去補。補了＝填洞。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">舉手——「如果我的表一格未載都沒有，我該怎麼辦？」齊答：重做欄位，逼它有機會說沒有。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 113/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="113">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">示範①：同一批來源，先問摘要</h2>
+  <div class="content-stack"><p class="lead">老師本＝資料包那本。只勾世衛、衞生署、澳門衛生局三份指引。學員只看，不要跟著按。</p>
+<p class="body-p">貼「幫我摘要」。等它出一段。指著螢幕：「這是覆蓋。帶不走。沒有未載、沒有打架、沒有下一步。」</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">全班看到摘要裡<strong>沒有</strong>「來源未載」四個字。看不到就再說一次。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 114/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="114">
+  <figure class="figure"><img src="img/organize-ask-layers.webp" alt="缺口怎麼用：表上的空格→箭頭→一份該去找的文件；旁邊的書籤＝好回答存成筆記當快照"></figure>
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">示範②③：對照表＋缺口</h2>
+  <div class="content-stack"><p class="lead">同一批來源，不要取消勾選。</p>
+<ol class="plain"><li>貼 B3，欄位改成每週分鐘數／強度／注意事項。找一格空的；AI 若填了，點引用，對不上就改「來源未載」</li><li>貼 B1b 第 2、3 問。把「再問 AI」改成「要找哪類文件」</li></ol>
+<div class="quote-block"><span class="focal">B3</span> 請生成一份比較表，欄位包含：名稱、總價或關鍵數字（來源怎麼寫就怎麼抄）、三大差異、限制或排除條款、售後或例外、來源標題。只抽取勾選來源裡出現的內容。空格填「來源未載」。完成後，列出你不確定、需要我人工核對的三格。</div>
+<div class="quote-block"><span class="focal">B1b</span> 根據我上傳的所有素材：1. 列出深入研究這個主題的人，應該能夠回答的 10 個最重要問題。2. 我的素材已經引發、但尚未回答的 5 個問題。3. 針對那 5 個開放問題，各需要什麼類型的額外資料、文獻或研究才能解答？請標示每個問題主要對應哪幾筆來源。</div>
+<p class="body-p">兩條貼之前末尾補同一句：只用我勾的來源；來源沒寫的填「來源未載」；繁體中文。</p>
+<p class="body-p">好回答存成筆記當快照。你自己的判斷用手寫；要讓之後的聊天讀到，再轉成來源。不要把 AI 摘要轉三次。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">全班看到至少一格「來源未載」或老師當眾改出來。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 115/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="115">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">交代 60 分鐘工作紙</h2>
+  <div class="content-stack"><p class="lead">活動頁 <code>#compare</code>。成功標準：一張對照表（含至少一格來源未載）＋紙上 4 題 FAQ（另 4 題留筆記本）＋五個缺口（含文獻類型）。</p>
+<table class="data"><thead><tr><th scope="col">分鐘</th><th scope="col">任務</th></tr></thead><tbody><tr><td>0–15</td><td>專家十問寫 5 個＋來源已引發但沒答的 2 題</td></tr><tr><td>15–35</td><td>對照表；沒有未載就重做欄位</td></tr><tr><td>35–50</td><td>FAQ 4 題，題題有引用</td></tr><tr><td>50–60</td><td>缺口五條；下一步不是「再問 AI」</td></tr></tbody></table>
+<p class="body-p">聊天風格可改學習指南。長度先短。自訂可貼：只根據來源，不補洞；沒寫的填「來源未載」；繁體中文。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">每人打開 <code>#compare</code>。登入失敗的用老師本問，仍要填表。倒數開始前齊答成功標準四個字：未載、引用、缺口、文獻。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 116/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="116">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：專家十問①寫出前兩題</h2>
+  <div class="content-stack"><p class="lead">倒數 5 分鐘。寫 2 個「深入研究這個主題的人應該能回答」的問題，並標主要對應哪筆來源。</p>
+<p class="body-p">成功長這樣：問題裡有對象或範圍，例如「45 歲、沒有私人教練，每週最少要多少分鐘？」不是「運動好不好」。</p>
+<p class="body-p">卡關：寫不出來——先抄來源標題，把標題改成問句。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">至少 2 題有字的舉手。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 117/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="117">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：專家十問②補到五題</h2>
+  <div class="content-stack"><p class="lead">倒數 5 分鐘。再寫 3 題，湊滿 5。其中至少 1 題要問「差異」或「限制」，不要五題都是「是什麼」。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">5 題都有來源欄的舉手。來源欄寫「網上」的退回，改檔名。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 118/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="118">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：來源已引發但還沒回答的兩題</h2>
+  <div class="content-stack"><p class="lead">倒數 5 分鐘。寫 2 題：你的材料已經讓你想問、但來源還沒答。這兩題等下會變成缺口。</p>
+<p class="body-p">成功長這樣：「膝蓋不適能不能做開合跳」——來源提到膝蓋或動作，但沒給處方。失敗長這樣：「AI 覺得怎樣」。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">2 題都不是「再問 AI」的舉手。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 119/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="119">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：對照表——先定三個表頭，再只勾要比的來源</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：先不要讓 AI 產表。自己在 <code>#compare</code> 寫三個欄位。建議：每週分鐘數／強度／注意事項。不准用「好不好」「值不值得」。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：只勾你要比的 2–3 檔，取消開箱文與活動型。貼 B3，欄位用上面那三個表頭，指令末句寫死：空格填「來源未載」。</p>
+<div class="quote-block"><span class="focal">B3</span> 請生成一份比較表，欄位包含：名稱、總價或關鍵數字（來源怎麼寫就怎麼抄）、三大差異、限制或排除條款、售後或例外、來源標題。只抽取勾選來源裡出現的內容。空格填「來源未載」。完成後，列出你不確定、需要我人工核對的三格。</div>
+<p class="body-p">貼之前末尾補同一句：只用我勾的來源；來源沒寫的填「來源未載」；繁體中文。</p>
+<p class="body-p"><strong>換成上班的樣子</strong>：三個方案比一比，表頭就是你要決定的那三件事——成本／工期／風險，不是「哪個最好」。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">三個表頭寫在活動頁、鄰座能唸出來。來源列看得見「未勾」的檔。全勾的退回重勾。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 120/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="120">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：對照表③等表、找空格</h2>
+  <div class="content-stack"><p class="lead">倒數 5 分鐘。表出來後，用眼睛找空格或「看起來太滿」的格。太滿的點引用；引用對不上就改成「來源未載」。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">每人用手指指出一格他準備標未載或已標未載。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 121/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="121">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：對照表④沒有未載就重做欄位</h2>
+  <div class="content-stack"><p class="lead">倒數 5 分鐘。若一格未載都沒有：把其中一欄改成來源比較不可能有的（例如「適用的膝蓋傷況」），再跑一次。評量看有沒有未載，不看表漂不漂亮。</p>
+<p class="body-p">把「來源未載出現在第幾格」寫進活動頁。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">活動頁「未載」那格有字。沒有的，現在改欄位再跑，不要空坐。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 122/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="122">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：FAQ——受眾與四題，題題有引用</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：先寫受眾（自己／家人／同事）。然後只寫 2 題 FAQ：問、答（≤80 字）、引用編號。不要行銷口吻。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：再寫 2 題，紙上湊滿 4。另外 4 題若要做，留筆記本，不佔這一頁。每題仍要引用。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">受眾有字；2 題都有引用。沒引用的刪掉重寫。4 題引用都在。有一題沒引用的，當沒寫。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 123/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="123">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：FAQ③鄰座互查引用</h2>
+  <div class="content-stack"><p class="lead">倒數 5 分鐘。鄰座只查一件：四題是不是題題有引用編號。沒有的當場補。15 分 FAQ 到此收。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">鄰座點頭或寫「第 X 題沒引用」。沒互查的不算過 FAQ。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 124/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="124">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：缺口——先寫三條，補到五條；提早完成加碼</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：寫 3 條：還缺什麼才敢結論。下一步要找哪<strong>類</strong>文件（年報、法條、官方 FAQ、有字幕影片）。不准寫再問 AI。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：再寫 2 條，湊滿 5。提早完成：列出一處矛盾，兩句原句並列（B2）。不准開始 Studio。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">3 條的「下一步」都是文獻類型。寫模型名稱的退回。5 條缺口都有文獻類型。60 分工作紙到此收。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 125/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="125">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">回饋：先看只有摘要的那份，再看有表、有未載的那份</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：老師投影（或口頭讀）一份只有摘要、沒有未載、沒有引用編號的成品。問：「會後 3 分鐘，你敢把這份轉寄給要開始運動的家人嗎？」先不要投票，只講哪裡不敢。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：投影第二份：有三欄表、至少一格來源未載、有引用。同一句話：會後 3 分鐘轉寄，哪一份能用？</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">至少三人說出一個「不敢」的理由。理由必須是缺引用／缺未載／缺來源，不是「文筆不好」。鄰座指出第二份的「未載」在第幾格。指不出來的，老師用雷射筆點。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 126/163 · 內容頁｜提問即整理 -->
+<section class="slide" data-source-page="126">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">回饋：投票，然後抽三份學員表的未載格</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：全班投票「哪份能會後 3 分鐘轉寄」。不要投文筆。投完請兩人用一句話說為什麼。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：抽三本活動頁（或投影三格）。只問：未載在哪一格？缺口的下一步是不是文獻類型？沒有未載的當眾重做欄位一句。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">投票結束。多數應落在有表那份；若落在摘要，停下來再問「你要轉寄的是文筆還是可核對的格子」。三本都問完。全班聽到至少一次「文獻類型」的例子。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 127/163 · 測驗｜提問即整理 -->
+<section class="slide" data-source-page="127">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">沒有「來源未載」的表，通常代表什麼？</h2>
+  <div class="content-stack"><div class="quiz-box" data-quiz-id="review-127"><p class="quiz-q">正解：B。Hint：全滿通常是猜。Explain：評量看未載，不是看漂亮。</p><button class="opt" type="button">A. 資料特別完整</button><button class="opt" type="button" data-correct>B. 欄位可能逼模型猜測或補洞</button><button class="opt" type="button">C. 引用一定都對</button><button class="opt" type="button">D. 可以當處方</button><div class="quiz-feedback"><div class="quiz-hint" hidden><strong>提示：</strong>全滿通常是猜。</div><div class="quiz-explain" hidden><strong>答案：</strong>評量看未載，不是看漂亮。</div></div></div></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">選完再進呈現篇。錯選 A 的，把示範表那格未載再看一次。</div></details>
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 128/163 · 本章重點｜提問即整理 -->
+<section class="slide" data-source-page="128">
+  
+  <div class="slide-header"><span class="eyebrow">提問即整理</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">本章重點：提問即整理</h2>
+  <div class="content-stack"><div class="summary-card"><ul><li>摘要是覆蓋；整理要結構、缺口、行動</li><li>對照表至少一格來源未載</li><li>缺口的下一步是文獻類型</li><li>人的判斷才值得轉成來源</li></ul></div>
+<p class="lead">&lt;!-- E --&gt;</p></div>
+  
+  <div class="slide-meta"><span>提問即整理</span><span class="num"></span></div>
+</section>
+
+<!-- 129/163 · CHAPTER -->
+<section class="slide dark title-slide" data-source-page="129">
+  <div class="cover-art" style="background-image:url('img/organize-open-present.webp')"></div>
+  <span class="chapter-index">08</span>
+  <h1 class="title">呈現：同一批證據的另一種閱讀介面</h1>
+  <div class="opener-tag"><p class="lead">（本章 120 分鐘＝講 35＋工作紙 60＋回饋 25）</p>
+<p class="body-p">不要再做一張提取表。</p></div>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 130/163 · 內容頁｜呈現 -->
+<section class="slide dense" data-source-page="130">
+  <figure class="figure"><img src="img/organize-studio-interface.webp" alt="工作室不是新證據：同一本筆記本接出三種不同的閱讀介面——耳機、分枝節點、空白投影框"></figure>
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">工作室不是新知識</h2>
+  <div class="content-stack"><p class="lead">右邊那些按鈕，是同一批來源的另一種閱讀介面。沒核對過的 Podcast 不能當事實。這句今天要聽到厭。</p>
+<table class="data"><thead><tr><th scope="col">你的需要</th><th scope="col">選</th></tr></thead><tbody><tr><td>看不出結構</td><td>心智圖</td></tr><tr><td>要帶去開會</td><td>報告／資料表</td></tr><tr><td>已經讀過、沒時間坐</td><td>語音摘要</td></tr><tr><td>要檢查自己記沒記</td><td>學習卡、測驗</td></tr><tr><td>結構已定要投影</td><td>簡報</td></tr></tbody></table>
+<p class="body-p">螢幕上一共九個鍵：語音摘要、簡報、影片摘要、心智圖、報告、學習卡、測驗、資訊圖表、資料表。今天學員動手七個；<strong>影片摘要與資訊圖表由老師預產</strong>（最慢、最吃額度），成品頁 136 看。</p>
+<p class="body-p"><strong>按鈕是免費的，按下去那一次不是。</strong> 免費帳號一堂課只夠生一次，所以今天不練「多試幾次」，練<strong>一次就中</strong>。</p>
+<p class="body-p">每個都按的人，通常哪個都沒核對。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">每人在紙上圈一種，<strong>並抄下它在螢幕上的正式名稱</strong>（找錯鍵會吃掉你唯一那次）。現在還不准按。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 131/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="131">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">音訊適合已經讀過的材料</h2>
+  <div class="content-stack"><p class="lead">語音摘要現在有<strong>四種格式</strong>，不是兩種。選錯格式，你唯一那次就沒了：</p>
+<table class="data"><thead><tr><th scope="col">格式</th><th scope="col">它會給你什麼</th></tr></thead><tbody><tr><td>深入探索</td><td>兩人熱烈對談，最長最好聽；複習<strong>已讀</strong>材料用</td></tr><tr><td>摘要</td><td>最短，90 秒抓三個數字；老師預產的就是這個</td></tr><tr><td>評論</td><td>對你的內容提專業建議——<strong>最容易講出來源沒有的話</strong></td></tr><tr><td>辯論</td><td>兩人各站一邊；<strong>本堂最推薦</strong>，它會把來源打架處講出來</td></tr></tbody></table>
+<p class="body-p">生成前改繁中、寫焦點。音訊適合<strong>已經讀過</strong>的材料，不適合第一次碰公式或圖表。免費額度音訊大約每日 3 次，所以音訊全班示範即可，不要 30 人同時按。千人場由老師預產。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">舉手——「第一次讀每週分鐘數，該聽 Podcast 還是該看表？」齊答：看表。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 132/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="132">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">聽 90 秒 Brief，寫一個主張</h2>
+  <div class="content-stack"><p class="lead">老師預產 Brief，聽 90 秒。每人寫下一個主張。先不要核對，下一頁才回聊天。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">90 秒結束，每人紙上至少一個主張。沒耳機的看字幕或看老師投影的逐字三句。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 133/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="133">
+  <figure class="figure"><img src="img/organize-slides-three-deaths.webp" alt="三種死法：一句變厚疊、對著空清單談感覺、先蓋樓後畫圖"></figure>
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">簡報三種死法</h2>
+  <div class="content-stack"><ol class="plain"><li>一句話交差：「把 50 頁變成 20 頁」——後段它會開始編</li><li>跟 AI 談感覺：「活潑一點、專業一點」——沒有可檢查的規格</li><li>先生成再看邏輯——等於先蓋樓再畫圖</li></ol>
+<p class="lead">評量看結構與引用，不看漸層。YAML、Canva、第三方改字工具，十小時不夠教。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">請一人用自己的話說出一種死法。說「字太醜」的，退回：那不是死法，是美工。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 134/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="134">
+  <figure class="figure"><img src="img/organize-outline-first.webp" alt="先大綱後生成：前景是被鉛筆改過的大綱卡，投影片只在背後淡淡一層"></figure>
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">正確三步：大綱 → 人改 → 只勾大綱再生成</h2>
+  <div class="content-stack"><ol class="plain"><li>只要文字大綱，人改邏輯與數字</li><li>大綱當唯一來源，取消其他勾選</li><li>指令：完全照大綱、不准自加、不准漏頁、字少、確認繁中</li></ol>
+<p class="lead">第 2 步就是等一下說的「<strong>勾</strong>」，第 3 步就是「<strong>寫</strong>」。中間還有一格「選」不要按錯：簡報的格式有兩個——<strong>詳細簡報</strong>是給人讀的長文件，<strong>簡報投影片</strong>才是上台用的。想要投影片卻選到詳細簡報，你唯一那次就用在一份電郵附件上了。</p>
+<p class="body-p">匯出 PPTX 常常是圖片，文字難改。課堂分數打在大綱，生成留給有大綱的人回家。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">請一人用四句說他的大綱骨架（主張／證據／證據／限制）。沒有「限制」的，當場補。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 135/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="135">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">指令要寫死什麼</h2>
+  <div class="content-stack"><p class="lead">九個鍵的焦點欄長得不一樣，要填的東西是同一套：<strong>早上那個 ICIO，縮成四句。</strong></p>
+<table class="data"><thead><tr><th scope="col">第幾句（＝ICIO 哪一格）</th><th scope="col">照抄這個骨架</th></tr></thead><tbody><tr><td>第 1 句（I 任務）</td><td>做〔什麼〕，〔幾頁／幾題／幾欄／第一層幾枝〕</td></tr><tr><td>第 2 句（C 背景）</td><td>給〔誰〕看，看完要做〔一個什麼決定〕</td></tr><tr><td>第 3 句（I 輸入）</td><td>只用我勾的來源／完全照我的四句大綱</td></tr><tr><td>第 4 句（O 輸出）</td><td>不准自加、沒寫的填「來源未載」、繁體中文</td></tr></tbody></table>
+<p class="body-p">簡報這一種填出來就是（提示詞庫 D5／D6 精神）：完全照大綱、不准自加觀點、不准漏頁、每頁字要少、逐字確認繁中。<strong>其餘八種照同一個骨架填，卡在附錄 A。</strong></p>
+<p class="body-p">不要寫：「幫我做得漂亮一點。」漂亮不是可核對的格子。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">紙上或活動頁有焦點四句，第 1 句帶數量、第 4 句有「不准自加」四字。缺的現在補。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 136/163 · 內容頁｜呈現 -->
+<section class="slide dense" data-source-page="136">
+  <figure class="figure"><img src="img/organize-mindmap-vs-table.webp" alt="左＝一個中心長出分枝；右＝四欄，其中一格是空的"></figure>
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">心智圖與資料表怎麼選</h2>
+  <div class="content-stack"><p class="lead">心智圖：用來發現自己沒注意到的分枝，不是海報。看到分枝，回聊天要引用。它的欄位問「<strong>主題是什麼？</strong>」——問句短，你就填短：</p>
+<p class="body-p">資料表：跨來源抽欄位，可匯試算表。這是辦公室最像「提取歸納」的鍵。欄位仍然你定，空格仍然未載。它的欄位問「<strong>請說明要建立的資料表</strong>」——問句長，你就把欄位名直接唸進去：</p>
+<p class="body-p"><strong>換成上班的樣子</strong>：把四欄換成來源檔名／數字／條件／適用對象——那就是你下週要貼進會議紀錄的那一張。</p>
+<p class="body-p"><strong>兩格問法不一樣，填的長度就不一樣</strong>：問「主題」的填一個題目加一個限制，問「說明」的把欄位名寫出來。照著問句的長度填，比背範本可靠。</p>
+<p class="body-p">千人場建議：約八成做心智圖或資料表或只交大綱。<strong>影片摘要與資訊圖表由老師預產</strong>——不是學員不能用，是它們最慢、最吃額度，而你們每人只有一次。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">維持 E1 圈定的那一種，不要改來改去。改的人舉手說為什麼——理由只能是「我的需要變了」，不能是「那個比較炫」。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 137/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="137">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">交代 60 分鐘</h2>
+  <div class="content-stack"><p class="lead">活動頁 <code>#present</code>。每人只選一種 Studio 輸出。書面仍繳「主張＋引用」，不能只交音檔。簡報組強制先交大綱給鄰座改，再生成。</p>
+<table class="data"><thead><tr><th scope="col">分鐘</th><th scope="col">任務</th></tr></thead><tbody><tr><td>0–20</td><td>四句大綱＋鄰座改邏輯（所有人都先寫，含非簡報組）</td></tr><tr><td>20–45</td><td>生成與核對：輸出裡抄三個主張，回聊天要引用</td></tr><tr><td>45–60</td><td>五句話寫給沒看過來源的人</td></tr></tbody></table>
+<p class="body-p">生成前：語言改繁中；有寫焦點。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">大綱四句沒寫完的，不准按生成。齊答：「先寫大綱還是先按按鈕？」</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 138/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="138">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：大綱——主張、給誰看、兩句證據</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：寫給誰看、看完一個決定、第 1 句主張。主張必須能指回來源，不能是「運動很重要」。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：寫第 2、3 句證據，標來源檔名。兩句不能來自同一格空話。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">主張有出處或標未載。沒有的退回。兩句都有檔名。檔名寫「AI 說的」退回。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 139/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="139">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：大綱③限制或反例，鄰座改邏輯並簽名</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：第 4 句必須是限制或反例：適用年齡、未載的傷況、開箱文不能當處方。沒有第四句，大綱不算完。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：鄰座只改邏輯與數字，不改文筆。改了什麼寫在 <code>#present</code>。簽名。沒有鄰座簽名，下一頁不准生成。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">第四句有「不能／未載／不適用」其中一個意思。簽名在活動頁。改「沒改」的，至少寫「第四句我建議加未載」。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 140/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="140">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：生成前檢查，然後按下去（只選一種）</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：還沒按。生成前你能動的只有三層，<strong>三層全是免費的，按下去那一次才要錢</strong>：</p>
+<table class="data"><thead><tr><th scope="col">層</th><th scope="col">現在檢查什麼</th></tr></thead><tbody><tr><td>① 勾（來源）</td><td>只勾這次要用的。簡報組：大綱存成筆記再轉來源，只勾這一則</td></tr><tr><td>② 選（下拉）</td><td>語言繁體中文；格式／長度／難易度／數量選好</td></tr><tr><td>③ 寫（焦點）</td><td>四句寫齊：做什麼＋幾個、給誰看、只用我勾的、不准自加</td></tr></tbody></table>
+<p class="body-p"><strong>最有力的是①，不是③。</strong> 勾錯來源，焦點欄寫得再漂亮也救不回來；而勾與選改幾次都不花額度。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：<strong>按之前先做最後一道免費的檢查：把你的焦點四句唸給鄰座聽 15 秒。</strong> 鄰座只問一句：「第 1 句有沒有數量？」</p>
+<p class="body-p">然後按一次。排隊就等，不要改按另一種。音訊配額用完改心智圖。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">三層都打勾。沒打勾的不准按。巡堂抽問一句：「你勾了幾份？」答不出數字的，回去數。焦點四句唸給鄰座聽過，然後輸出出現或明確改做心智圖／資料表。乾等超過 4 分鐘的，改用紙本五句，下一頁仍要核對老師示範輸出。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 141/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="141">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：從輸出抄主張①②③，逐句核對</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：從輸出抄第 1 個主張，回聊天要引用。來源沒有就標「誰在加油」。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：再抄兩個主張，同樣回聊天核對。測驗／學習卡組：錯了幾題、explain 之後回到的原文句，寫在活動頁。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">第 1 格有「有／無」和引用或加油。三個主張都核過。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 142/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="142">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：生成段收束——哪一句是加油</h2>
+  <div class="content-stack"><p class="lead">倒數 5 分鐘。三個主張裡圈一句「最可能是加油」的。沒有也要寫「三句我都點過引用」。25 分生成段到此。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">圈了或寫了核對句。全空白的退回。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 143/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="143">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：書面五句——前三句與後兩句含限制</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：寫給沒看過來源的人。前三句：每句能指回來源或標未載。不能只交音檔。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：第 4 句限制或反例；第 5 句一個決定。60 分工作紙到此收。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">三句都有出處或未載。五句齊。只有音檔、沒有五句的退回。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 144/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="144">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：書面五句③鄰座只問出處</h2>
+  <div class="content-stack"><p class="lead">倒數 5 分鐘。鄰座只問：「哪一句沒出處？」沒有的現在補。60 分工作紙到此收。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">鄰座簽「出處看過」。沒簽的五句仍要自己補出處。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 145/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="145">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">回饋：再聽 Brief 90 秒，然後分享加油句</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：重播老師預產 Brief（或第一段 90 秒）。任務：找一句來源沒有、主持人加油的話。先寫原句，後半才討論。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：抽三人讀自己抄的原句。全班判斷：來源有沒有。有爭議就點引用，不要用多數決當事實。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">每人紙上有一句（找到或寫「核對了第 X 句，來源有」）。至少聽完三句。有一句被判定「來源沒有」最好；沒有也不延長。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 146/163 · 內容頁｜呈現 -->
+<section class="slide" data-source-page="146">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">回饋：書面五句抽看，再看選型有沒有核對</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：抽兩本 <code>#present</code> 五句。只問：哪一句沒出處？哪一句是限制？沒有限制的，請他現在補。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：舉手：心智圖／表／大綱／音訊／測驗。每一種抽一人：「你核對了哪一句？」答不出來的，那一種輸出今天先當草稿——核對過一句，它就算成品。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">兩本問完。全班聽到「限制」的例子。每種至少問過一人，或該種沒人選就跳過。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 147/163 · 測驗｜呈現 -->
+<section class="slide" data-source-page="147">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">Studio 產出是什麼？</h2>
+  <div class="content-stack"><div class="quiz-box" data-quiz-id="review-147"><p class="quiz-q">正解：B。Hint：按鈕換的是介面，不是證據。Explain：沒核對的 Podcast 不當事實。</p><button class="opt" type="button">A. 一批新的、不必核對的知識</button><button class="opt" type="button" data-correct>B. 同一批來源的另一種閱讀介面，仍要核對引用</button><button class="opt" type="button">C. 可以取代提取表</button><button class="opt" type="button">D. 音訊一定比表格準</button><div class="quiz-feedback"><div class="quiz-hint" hidden><strong>提示：</strong>按鈕換的是介面，不是證據。</div><div class="quiz-explain" hidden><strong>答案：</strong>沒核對的 Podcast 不當事實。</div></div></div></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">選完再進閉環。錯選 A 或 C 的，把 E1 那句再唸一次。</div></details>
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 148/163 · 本章重點｜呈現 -->
+<section class="slide" data-source-page="148">
+  
+  <div class="slide-header"><span class="eyebrow">呈現篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">本章重點：呈現</h2>
+  <div class="content-stack"><div class="summary-card"><ul><li>工作室不是新證據</li><li>按鈕免費，按下去那一次不免費：勾、選、寫三層都調好才按</li><li>焦點欄＝ICIO 四句：做什麼＋幾個、給誰看、只用我勾的、不准自加</li><li>先大綱後生成；每人只選一種</li><li>書面仍是主張＋引用</li><li>沒核對的 Podcast 不當事實</li></ul></div>
+<p class="lead">&lt;!-- F --&gt;</p></div>
+  
+  <div class="slide-meta"><span>呈現篇</span><span class="num"></span></div>
+</section>
+
+<!-- 149/163 · CHAPTER -->
+<section class="slide dark title-slide" data-source-page="149">
+  <div class="cover-art" style="background-image:url('img/organize-open-loop.webp')"></div>
+  <span class="chapter-index">09</span>
+  <h1 class="title">閉環：會丟掉來源，敢講不敢結論</h1>
+  <div class="opener-tag"><p class="lead">（本章 90 分鐘）</p>
+<p class="body-p">原料必須是上堂可讀堆＋本堂提取表／對照／守門。不准換題。</p></div>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 150/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide" data-source-page="150">
+  <figure class="figure"><img src="img/organize-expert-three.webp" alt="專家三件：問句、把一張丟進回收、資料夾往前"></figure>
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">專家不是比較多按鈕</h2>
+  <div class="content-stack"><p class="lead">專家會做三件新手不做的：把問題寫到不能再糊、會丟掉來源、會寫下一步要找哪類文獻。</p>
+<p class="body-p">傲慢是敢丟來源。謙虛是敢說不敢結論。兩句都要有。只有傲慢會偏食；只有謙虛會永遠在收集。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">鄰座互說「丟掉」和「不敢結論」各一句。缺一句的，這一頁再坐 30 秒。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 151/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide" data-source-page="151">
+  <figure class="figure"><img src="img/organize-oral-four.webp" alt="口頭四句：前三句已經填滿，第四句留白＝資料沒有、我不敢結論的地方"></figure>
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">口頭鐵律四句</h2>
+  <div class="content-stack"><p class="lead">3 分鐘報告只准這四句，超時打斷：</p>
+<ol class="plain"><li>我收了什麼（類型、數量）</li><li>我丟掉什麼、為什麼</li><li>一個有引用的發現</li><li>一個資料沒有、我不敢結論的地方</li></ol>
+<p class="body-p">沒有第四句，不算完。聽的人只准問：你哪一句還沒核對？</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">全班把四句編號抄在 <code>#oral</code> 頂端，現在還不填內容。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 152/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide dense" data-source-page="152">
+  <figure class="figure"><img src="img/organize-three-desks.webp" alt="三張桌子各一樣東西，圈起中間那張＝只走一條到底"></figure>
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">三桌只換問法；Discover 只給老師 8 分鐘</h2>
+  <div class="content-stack"><p class="lead">選一條走到底。不要三條都做一半。原料仍是同一堆。</p>
+<ul class="plain scan"><li>學習桌：常見誤解＋一題一題考我。預測考題＝教材篇幅，不是真題</li><li>工作桌：若把這堆當成一次講座，寫決議／待辦／未決。沒說負責人就「待確認」</li><li>研究桌：對照＋矛盾＋下一步文獻</li></ul>
+<p class="body-p">三桌的提示詞<strong>已經寫好在手卡上</strong>（附錄 C），每一條都有編號。工作紙「問」那一格要填的就是那個編號。</p>
+<p class="body-p">老師投影預先截好的 Discover 候選約 6 筆（含 1 筆業配）：<strong>候選 ≠ 來源 ≠ 證據</strong>。學員<strong>不跑</strong> Discover／Deep Research。</p>
+<p class="body-p">老師這 8 分鐘同時示範「研究題怎麼寫」（備課包 <code>03_提示詞庫</code> C1 四格，學員只看不做）：</p>
+<table class="data"><thead><tr><th scope="col">格</th><th scope="col">老師當場唸出來的</th></tr></thead><tbody><tr><td>範圍</td><td>中年人開始規律運動的官方建議，港澳與國際</td></tr><tr><td>給誰／做什麼</td><td>給 45 歲的自己，用來決定這週先做哪一種運動</td></tr><tr><td><strong>不要什麼</strong></td><td>無日期懶人包、賣課頁、健身房業配</td></tr><tr><td>期望產出</td><td>候選清單，不是結論</td></tr></tbody></table>
+<p class="body-p">第三格是整段的重點：<strong>「不要什麼」寫不出來的人，候選清單一定會混進業配。</strong></p>
+<p class="body-p">隱私：一人一本。不願上 Drive 的，繼續用老師本。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">每人在 <code>#oral</code> 圈一桌。業配那筆全班口頭「丟」。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 153/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide" data-source-page="153">
+  
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：找——題目一句；收——來源筆數</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：<code>#oral</code>「找」：題目仍是中年人規律運動／你的可讀堆主題。不准改開保險、食譜、辦公課案例。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：寫你筆記本裡實際留下的筆數與類型（PDF／網頁／影片）。<code>#feed</code> 若現課沒填完，現在補餵／不餵。精讀應餵。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">題目一句寫完。寫成新主題的退回。筆數是數字，不是「一些」。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 154/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide" data-source-page="154">
+  <figure class="figure"><img src="img/organize-wash-drop.webp" alt="洗來源：手把一份丟進淘汰盤，留下的那疊才進筆記本"></figure>
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：洗——先標要丟的，再寫可檢查的理由</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：淘汰列必須進「洗」。開箱文當坑：不當處方。至少指出 1 筆要丟，<strong>而且理由要可檢查</strong>——這一節看的是理由，不是筆數。</p>
+<p class="body-p">（守門單那套「留 4 丟 2」是獨立守門場的線，見附錄 D；主課這裡不套用。）</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：丟掉的理由不能只寫「感覺不可靠」。用：無作者、無日期、層級是開箱、與問題無關、沒字幕。</p>
+<p class="body-p">寫完再補一格（備課包 <code>06_學員工作紙</code> 紙 3 那一句，今天最值得帶走的）：</p>
+<p class="body-p">最危險的不是最爛的那一筆。最爛的你一眼就丟了。最危險的是<strong>差一點就被你留下</strong>的那一筆。</p>
+<p class="body-p">丟完之後，對留下來的再問一次（C2）：哪幾筆是一手／官方，哪幾筆是二手／行銷？兩邊分不出來的，那一筆先當二手。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">洗那格有檔名。全留的，現在強制丟第 5 檔或自己堆裡的淘汰列。理由是可檢查的句子。寫「不好」的退回。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 155/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide" data-source-page="155">
+  
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：問——主提示詞，跑一次並存快照</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：寫主提示詞編號：ICIO、B3、B1b、或段 P 的優質版。禁止只寫「幫我整理」。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：貼進聊天跑一次。好回答存筆記當快照。不要把摘要轉來源三次。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">提示詞裡看得到格式或「來源未載」。筆記本裡有一則剛存的筆記，或紙上抄了三句帶引用。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 156/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide" data-source-page="156">
+  
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：核——點一個引用，標一致或不一致</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：點一個引用，抄原文至少 15 字。一致或不一致寫在 <code>#oral</code> 核。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：若一致，寫「一致＋引用編號」。若不一致，兩句並列。沒有不一致也要寫「我核過第 X 句」。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">原文句在紙上。沒點引用的退回。核那格不是空白。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 157/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide" data-source-page="157">
+  
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：出——給誰、什麼格式，鄰座 30 秒看得懂</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：寫給誰看、什麼格式（表／五句／大綱）。這就是四層的行動層。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：鄰座只看「出」那格：給誰、格式。30 秒看不懂的，改短。這是全課評量那把尺。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">給誰＋格式都有字。鄰座說「看得懂」或指出卡住的詞。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 158/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide" data-source-page="158">
+  
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">實作：缺口兩條＋口頭四句；提早完成加碼</h2>
+  <div class="content-stack"><p class="lead"><strong>前半（0–5 分）</strong>：缺口兩條含文獻類型。口頭第 1、2 句：收了什麼、丟掉什麼。</p>
+<p class="body-p"><strong>後半（5–10 分）</strong>：第 3 句有引用的發現；第 4 句不敢結論。沒有第四句不算完。提早完成：缺口 1 真的找到一筆公開來源網址。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">第 2 句有丟掉的理由。全留的不算。四句齊。60 分實作到此收。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 159/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide" data-source-page="159">
+  <figure class="figure"><img src="img/organize-rubric-four.webp" alt="四級評分尺由低到高，最高一級插旗"></figure>
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">抽籤規則與評分尺</h2>
+  <div class="content-stack"><p class="lead">千人場最多 3–4 人。每人 ≤3 分鐘，超時打斷。其餘書面收。聽的人只准問一句：你哪一句還沒核對？</p>
+<p class="body-p"><strong>最後 5 分鐘留給你自己的案子</strong>——你手上那份真的要交的東西，等一下可以直接問。</p>
+<table class="data"><thead><tr><th scope="col">分數</th><th scope="col">看到什麼</th></tr></thead><tbody><tr><td>未過</td><td>只有摘要、無引用、來源全留</td></tr><tr><td>過</td><td>有表或 FAQ、有引用、至少一格未載</td></tr><tr><td>好</td><td>有丟來源的理由、有缺口清單</td></tr><tr><td>優</td><td>口頭第四句清楚；能指出一處 AI 多講的話</td></tr></tbody></table></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">沒抽到的人確認四句仍寫在 <code>#oral</code>。齊答：「超時怎麼辦？」打斷。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 160/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide" data-source-page="160">
+  
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">抽籤報告</h2>
+  <div class="content-stack"><p class="lead">請第 1、2 位。每人 3 分鐘內講完四句。超時打斷。聽眾只准問那一句。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">兩人講完。老師只打分數尺上的等第，不改文筆。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 161/163 · 內容頁｜閉環與四句口頭 -->
+<section class="slide" data-source-page="161">
+  
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">你自己的案子：一人一題＋收束</h2>
+  <div class="content-stack"><p class="lead"><strong>這 5 分鐘是你的。</strong> 一人一題，只問<strong>你自己的案子</strong>——你手上那份報告、那批報價、那個要交的東西，這套方法怎麼套上去。不是問工具怎麼按，是問「我這種材料該定哪三個欄位」。</p>
+<p class="body-p">收束：回家把缺口清單真的拿去找下一批來源，丟回同一本再問——那才叫知識庫，不是一次摘要比賽。</p></div>
+  <details class="cue"><summary>確認動作</summary><div class="cue-body">沒抽到的人四句仍要寫完才算本章結束。</div></details>
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 162/163 · 本章重點｜閉環與四句口頭 -->
+<section class="slide" data-source-page="162">
+  
+  <div class="slide-header"><span class="eyebrow">閉環篇</span><span class="caption">AI 輔助資料搜尋及整理・整理篇</span></div>
+  <h2 class="assertion">本章重點：閉環</h2>
+  <div class="content-stack"><div class="summary-card"><ul><li>會丟來源，才叫守門</li><li>口頭第四句：不敢結論的地方</li><li>回家把缺口清單真的拿去找下一批來源，丟回同一本再問——那才叫知識庫</li></ul></div>
+<p class="lead">&lt;!-- END --&gt;</p></div>
+  
+  <div class="slide-meta"><span>閉環篇</span><span class="num"></span></div>
+</section>
+
+<!-- 163/163 · END -->
+<section class="slide dark title-slide" data-source-page="163">
+  <div class="cover-art" style="background-image:url('img/organize-takeaway-four.webp')"></div>
+  <span class="ch-pill">AI 輔助資料搜尋及整理（下）</span>
+  <h1 class="title">AI輔助資料搜尋及整理（下）：整理篇</h1>
+  <div class="opener-tag"><p class="lead"><strong>帶走兩件事：</strong></p>
+<ol class="plain"><li><strong>一份你自己主題的筆記</strong>——提取表＋歸納＋對照，有出處、有你的話，而且下班打得開。</li><li><strong>一套四步方法</strong>——搜（兩通道）→查證→讀（提取＋歸納）→判斷。</li></ol>
+<p class="body-p">隨身再加三樣：一條 ICIO 提示詞、外掛或備案、四句口頭。</p>
+<p class="body-p">工具會一直換新，查證與判斷不會過時。謝謝大家。</p>
+<p class="body-p">&lt;!-- APPENDIX-A --&gt;</p></div>
+  <div class="slide-meta"><span>結尾</span><span class="num"></span></div>
+</section>
+<div class="nav-controls">
+  <div class="slide-num" id="slideNum">01</div>
+  <button id="cueBtn" type="button" aria-pressed="false">講師提示</button>
+  <button id="prevBtn" type="button">◀ 上一頁</button>
+  <button id="nextBtn" type="button">下一頁 ▶</button>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll('.slide'));
+const totalSlides = slides.length;
+let currentSlide = 1;
+const pad = n => String(n).padStart(2, '0');
+slides.forEach((s, i) => {
+  s.id = 'slide' + (i + 1);
+  const num = s.querySelector('.slide-meta .num');
+  if (num) num.textContent = pad(i + 1) + ' / ' + totalSlides;
+});
+function showSlide(n) {
+  if (n < 1) n = 1;
+  if (n > totalSlides) n = totalSlides;
+  slides.forEach(s => s.classList.remove('active'));
+  slides[n - 1].classList.add('active');
+  currentSlide = n;
+  const rail = document.getElementById('progressRail');
+  rail.innerHTML = '';
+  for (let i = 1; i <= totalSlides; i++) {
+    const tick = document.createElement('div');
+    tick.className = 'tick' + (i < n ? ' past' : '') + (i === n ? ' active' : '');
+    rail.appendChild(tick);
+  }
+  document.getElementById('slideNum').textContent = pad(n) + ' / ' + totalSlides;
+  if (('#' + n) !== location.hash) history.replaceState(null, '', '#' + n);
+}
+function nextSlide() { showSlide(currentSlide + 1); }
+function prevSlide() { showSlide(currentSlide - 1); }
+document.getElementById('nextBtn').addEventListener('click', nextSlide);
+document.getElementById('prevBtn').addEventListener('click', prevSlide);
+const cueBtn = document.getElementById('cueBtn');
+function setTeacher(on) {
+  document.body.classList.toggle('teacher', on);
+  if (cueBtn) {
+    cueBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    cueBtn.textContent = on ? '講師提示 · 開' : '講師提示';
+  }
+  try { sessionStorage.setItem('teacherCues', on ? '1' : '0'); } catch (err) {}
+}
+if (cueBtn) cueBtn.addEventListener('click', function() { setTeacher(!document.body.classList.contains('teacher')); });
+try { if (sessionStorage.getItem('teacherCues') === '1') setTeacher(true); } catch (err) {}
+document.addEventListener('keydown', function(e) {
+  const typing = e.target && e.target.closest && e.target.closest('input,textarea,[contenteditable]');
+  if (typing) return;
+  if (e.key === 'n' || e.key === 'N') { e.preventDefault(); setTeacher(!document.body.classList.contains('teacher')); return; }
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); nextSlide(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); prevSlide(); }
+  else if (e.key === 'Home') { showSlide(1); }
+  else if (e.key === 'End') { showSlide(totalSlides); }
+});
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+document.addEventListener('touchend', e => {
+  const diff = e.changedTouches[0].screenX - touchStartX;
+  if (Math.abs(diff) > 50) { diff < 0 ? nextSlide() : prevSlide(); }
+});
+document.querySelectorAll('.quiz-box').forEach(function(box) {
+  const explain = box.querySelector('.quiz-explain');
+  box.querySelectorAll('.opt').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      if (box.classList.contains('locked')) return;
+      if (opt.hasAttribute('data-correct')) {
+        opt.classList.add('correct');
+        box.classList.add('locked');
+        if (explain) { explain.hidden = false; const st = explain.querySelector('strong'); if (st) st.textContent = '✓ 答對了：'; }
+      } else {
+        opt.classList.add('wrong');
+        const hint = box.querySelector('.quiz-hint');
+        if (hint) hint.hidden = false;
+        if (explain) explain.hidden = false;
+      }
+    });
+  });
+});
+const fromHash = parseInt((location.hash || '').slice(1), 10);
+showSlide(Number.isInteger(fromHash) ? fromHash : 1);
+</script>
+</body>
+</html>
